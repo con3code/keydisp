@@ -1,0 +1,18 @@
+# Build artifacts
+build/
+dist/
+DerivedData/
+
+# XcodeGen generates the project from project.yml — run `xcodegen generate`
+KeyDisp.xcodeproj/
+
+# Private development docs (not for the public repository)
+docs-private/
+
+# macOS / Xcode noise
+.DS_Store
+xcuserdata/
+*.xcuserstate
+
+# Claude Code local settings
+.claude/

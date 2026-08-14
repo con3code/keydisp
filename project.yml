@@ -1,0 +1,47 @@
+name: KeyDisp
+options:
+  bundleIdPrefix: dev.rin
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+
+targets:
+  KeyDisp:
+    type: application
+    platform: macOS
+    sources:
+      - path: KeyDisp
+        excludes:
+          - "*.entitlements"
+    info:
+      path: KeyDisp/Info.plist
+      properties:
+        CFBundleDisplayName: KeyDisp
+        CFBundleName: KeyDisp
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.utilities
+        LSUIElement: true
+        # Credits: con3code / Kotatsu Rin
+        NSHumanReadableCopyright: "© 2026 con3code"
+        NSPrincipalClass: NSApplication
+        ITSAppUsesNonExemptEncryption: false
+        NSSupportsSuddenTermination: false
+    entitlements:
+      path: KeyDisp/KeyDisp.entitlements
+      properties:
+        # 開発ビルド用: サンドボックス無効（CGEventTap によるキー監視のため）。
+        # App Store 配信時の注意は README.md を参照。
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.rin.KeyDisp
+        MARKETING_VERSION: 1.0.0
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "5.0"
+        ENABLE_HARDENED_RUNTIME: true
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: false
+        DEAD_CODE_STRIPPING: true
