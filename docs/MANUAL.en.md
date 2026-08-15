@@ -173,7 +173,7 @@ Open **Settings…** from the menu bar.
 |---|---|
 | Show all key input | When on, ordinary typing (letters/numbers) is displayed too. When off (default), only combinations and special keys are shown |
 | Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
-| Keep a row each time a modifier is released | When on, releasing part of a combination and **holding the rest for more than 0.5 seconds** leaves the combination so far as history, and the keys still held appear as a new row (⇧⌘ → ⇧). Release everything sooner and it stays a single row, so ordinary shortcuts never add rows. Useful when the press-and-release steps are what you are teaching (default off) |
+| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for more than 0.5 seconds**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
 | Size | Scale of the key display (×0.5–×5.0) |
 | Hold Duration | How long a row remains after release (0–5 s) |
 | Fade-out Duration | How long the fade takes (0.1–4 s) |

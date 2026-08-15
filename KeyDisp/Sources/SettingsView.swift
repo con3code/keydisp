@@ -23,8 +23,8 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Toggle(L("修飾キーを離すたびに履歴を残す", "Keep a row each time a modifier is released"), isOn: $settings.stepModifierRelease)
-                Text(L("オンにすると、修飾キーの一部を離して残りを 0.5 秒以上押し続けたときだけ、そこまでの組み合わせが履歴として残り、押している組み合わせが新しい行に出ます（⇧⌘ → ⇧）。それより早く離しきった場合は 1 回の操作として「⇧⌘」の 1 行にまとまります。押し引きの手順そのものを見せたいときに使います。",
-                       "When on, releasing part of a combination and holding the rest for more than 0.5 seconds leaves the combination so far as history, and the keys still held appear as a new row (⇧⌘ → ⇧). Release everything sooner and it stays a single \"⇧⌘\" row. Useful when the press-and-release steps are what you are teaching."))
+                Text(L("修飾キーの一部を離して残りを 0.5 秒以上押し続けたときの動きが変わります。オンなら、そこまでの組み合わせを履歴として残し、押している組み合わせを新しい行に出します（⇧⌘ → ⇧）。オフなら行を増やさず、その行が押している組み合わせだけの表示に変わります。どちらも 0.5 秒より早く離しきった場合は、押した組み合わせ全体が 1 行として残ります。",
+                       "Changes what happens when you release part of a combination and hold the rest for more than 0.5 seconds. On: the combination so far stays as history and the keys still held start a new row (⇧⌘ → ⇧). Off: no row is added — the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination as one row."))
                     .font(.caption)
                     .foregroundColor(.secondary)
                 sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
