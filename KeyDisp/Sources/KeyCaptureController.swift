@@ -221,8 +221,11 @@ final class KeyCaptureController {
                 lastTypingTime = now
                 return
             }
-            // 新しいタイピング行
+            // 新しいタイピング行。
+            // 直前の行は連結を打ち切られてここへ来る（行数上限での分割や連結時間切れ）。
+            // 押しっぱなし扱いのまま取り残されると消えなくなるので、必ず解放する。
             let id = model.begin(tokens: [token], isTyping: true)
+            model.releaseOtherTypingRows(except: id)
             currentID = id
             currentIsModifierOnly = false
             lastTypingID = id
@@ -231,6 +234,7 @@ final class KeyCaptureController {
             // コンボ（修飾キー付き、または特殊キー単独）
             let tokens = KeyFormatter.modifierTokens(flags, keyCode: code) + [KeyFormatter.keyLabel(code, shifted: false)]
             lastTypingID = nil
+            model.releaseOtherTypingRows()
             if let id = currentID, currentIsModifierOnly {
                 if let target = mergeTargetID(for: tokens, ignoring: id) {
                     // 同じコンビネーションの連続押し: 「⌘」単独行を破棄して既存行を ×n に
@@ -272,6 +276,9 @@ final class KeyCaptureController {
         pressedKeys.remove(code)
 
         guard pressedKeys.isEmpty else { return }
+        // 物理キーが 1 つも押されていないなら、押しっぱなし扱いのタイピング行は残らないはず。
+        // 早いタイピングでキーの押下が重なった際の取り残しをここで確実に回収する。
+        model.releaseOtherTypingRows(except: currentIsModifierOnly ? nil : currentID)
         if let id = currentID, !currentIsModifierOnly {
             model.release(id: id)
             currentID = nil

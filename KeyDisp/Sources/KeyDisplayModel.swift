@@ -79,6 +79,14 @@ final class KeyDisplayModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + hold + fadeLen + 0.1, execute: remove)
     }
 
+    /// タイピング行は同時に 1 つだけ生きていればよい。行の分割や連結の打ち切りで
+    /// 取り残された行（押しっぱなし扱いのまま消えない行）を解放する。
+    func releaseOtherTypingRows(except id: UUID? = nil) {
+        for entry in entries where entry.isTyping && entry.phase == .active && entry.id != id {
+            release(id: entry.id)
+        }
+    }
+
     /// 同じキーの連続入力: 回数を増やして表示を維持する
     func increment(id: UUID) {
         guard let idx = entries.firstIndex(where: { $0.id == id }) else { return }
