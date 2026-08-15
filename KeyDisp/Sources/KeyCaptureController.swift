@@ -17,6 +17,11 @@ final class KeyCaptureController {
     /// 修飾キー単独行に表示する内容。一連の操作で押された修飾キーの最大集合を保つ。
     /// （⌘⇧ を押して片方を先に離しても、表示は「⇧⌘」のまま残す）
     private var modifierPeak: CGEventFlags = []
+    /// 「離すたびに履歴を残す」モードで、履歴化を保留しておく処理
+    private var stepCommitWork: DispatchWorkItem?
+    /// 一部を離した後この時間だけ押し続けたら、意図的な段階とみなして履歴化する。
+    /// これより早く全部離した場合は 1 回の操作としてまとめる。
+    private let stepCommitDelay: TimeInterval = 1.0
     /// コンボのキーを離した後、修飾キーだけが残っている間は
     /// 修飾キー単独行を出さないためのフラグ
     private var suppressModifierEntry = false
@@ -104,11 +109,43 @@ final class KeyCaptureController {
         currentIsModifierOnly = false
         currentModifiers = []
         modifierPeak = []
+        cancelStepCommit()
         suppressModifierEntry = false
         lastTypingID = nil
         mouseEntryID = nil
         lastComboID = nil
         lastComboTokens = nil
+    }
+
+    // MARK: - 「離すたびに履歴を残す」の保留処理
+
+    private func cancelStepCommit() {
+        stepCommitWork?.cancel()
+        stepCommitWork = nil
+    }
+
+    /// 修飾キーの一部を離した状態で `stepCommitDelay` だけ押し続けたら、
+    /// そこまでの組み合わせを履歴として確定し、残りを新しい行にする。
+    /// それより早く離しきった場合は、この処理が取り消されて 1 行のままになる。
+    private func armStepCommit(remaining: CGEventFlags) {
+        cancelStepCommit()
+        guard !remaining.isEmpty else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self,
+                  let id = self.currentID,
+                  self.currentIsModifierOnly,
+                  self.entryCount(id) == 1 else { return }
+            self.model.release(id: id)
+            self.lastComboID = id
+            self.lastComboTokens = self.model.entries.first(where: { $0.id == id })?.tokens
+            self.modifierPeak = remaining
+            self.currentID = self.model.begin(
+                tokens: KeyFormatter.modifierTokens(remaining), isTyping: false
+            )
+            self.stepCommitWork = nil
+        }
+        stepCommitWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + stepCommitDelay, execute: work)
     }
 
     /// エントリの現在の連続カウント（存在しなければ 1）
@@ -181,6 +218,8 @@ final class KeyCaptureController {
         }
         let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         pressedKeys.insert(code)
+        // 文字キーが押されたなら修飾キー行はコンビネーションへ変わるので、履歴化の保留は破棄する
+        cancelStepCommit()
 
         let flags = KeyFormatter.relevantFlags(event.flags)
         currentModifiers = flags
@@ -365,6 +404,9 @@ final class KeyCaptureController {
         let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         let flags = KeyFormatter.relevantFlags(event.flags)
         currentModifiers = flags
+        // 修飾キーの状態が動いたので、保留していた履歴化はいったん取り消す
+        // （必要ならこの後 armStepCommit で組み直す）
+        cancelStepCommit()
 
         // Caps Lock はトグルなので一瞬だけ表示（連打は ×n にまとめる）
         if code == 57 {
@@ -402,13 +444,10 @@ final class KeyCaptureController {
                     modifierPeak = flags
                     currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
                 } else if settings.stepModifierRelease, !flags.isSuperset(of: modifierPeak) {
-                    // 「離すたびに履歴を残す」: 修飾キーが減ったら、そこまでの組み合わせを
-                    // 履歴として確定させ、まだ押されているぶんを新しい行にする
-                    model.release(id: id)
-                    lastComboID = id
-                    lastComboTokens = model.entries.first(where: { $0.id == id })?.tokens
-                    modifierPeak = flags
-                    currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
+                    // 「離すたびに履歴を残す」: 修飾キーが減った。ここで即座に履歴化すると
+                    // 単に離しきる途中の一瞬まで行になってしまうので、残りを押し続けた
+                    // ときだけ履歴として確定させる（下の armStepCommit を参照）
+                    armStepCommit(remaining: flags)
                 } else {
                     // 押し足した修飾キーは加えるが、離したぶんは消さない。
                     // 途中で片方を離しても「⇧⌘」のまま表示し続けるため。
