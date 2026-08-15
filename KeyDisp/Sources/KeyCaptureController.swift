@@ -19,9 +19,11 @@ final class KeyCaptureController {
     private var modifierPeak: CGEventFlags = []
     /// 「離すたびに履歴を残す」モードで、履歴化を保留しておく処理
     private var stepCommitWork: DispatchWorkItem?
-    /// 一部を離した後この時間だけ押し続けたら、意図的な段階とみなして履歴化する。
-    /// これより早く全部離した場合は 1 回の操作としてまとめる。
-    private let stepCommitDelay: TimeInterval = 1.0
+    /// コンビネーションの後も押し続けている修飾キーを、改めて表示するための処理
+    private var reshowWork: DispatchWorkItem?
+    /// この時間だけ押し続けたら「意図して押している」とみなす。
+    /// これより早く離した場合は 1 回の操作の一部として扱う。
+    private let deliberateHoldDelay: TimeInterval = 1.0
     /// コンボのキーを離した後、修飾キーだけが残っている間は
     /// 修飾キー単独行を出さないためのフラグ
     private var suppressModifierEntry = false
@@ -110,6 +112,7 @@ final class KeyCaptureController {
         currentModifiers = []
         modifierPeak = []
         cancelStepCommit()
+        cancelModifierReshow()
         suppressModifierEntry = false
         lastTypingID = nil
         mouseEntryID = nil
@@ -124,7 +127,7 @@ final class KeyCaptureController {
         stepCommitWork = nil
     }
 
-    /// 修飾キーの一部を離した状態で `stepCommitDelay` だけ押し続けたら、
+    /// 修飾キーの一部を離した状態で `deliberateHoldDelay` だけ押し続けたら、
     /// そこまでの組み合わせを履歴として確定し、残りを新しい行にする。
     /// それより早く離しきった場合は、この処理が取り消されて 1 行のままになる。
     private func armStepCommit(remaining: CGEventFlags) {
@@ -145,7 +148,38 @@ final class KeyCaptureController {
             self.stepCommitWork = nil
         }
         stepCommitWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + stepCommitDelay, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + deliberateHoldDelay, execute: work)
+    }
+
+    // MARK: - コンビネーション後に押し続けている修飾キーの再表示
+
+    private func cancelModifierReshow() {
+        reshowWork?.cancel()
+        reshowWork = nil
+    }
+
+    /// コンビネーション（⌘C や ⌘+クリックなど）を終えた後も修飾キーを押し続けている場合、
+    /// `deliberateHoldDelay` 待ってから修飾キー単独の行を出し直す。
+    /// すぐ離す・続けて次の操作をする場合は取り消されるので、余計な行は増えない。
+    private func armModifierReshow(_ flags: CGEventFlags) {
+        cancelModifierReshow()
+        guard !flags.isEmpty else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self,
+                  self.currentID == nil,
+                  self.mouseEntryID == nil,
+                  self.currentModifiers == flags else { return }
+            self.suppressModifierEntry = false
+            self.modifierPeak = flags
+            self.currentIsModifierOnly = true
+            self.lastTypingID = nil
+            self.currentID = self.model.begin(
+                tokens: KeyFormatter.modifierTokens(flags), isTyping: false
+            )
+            self.reshowWork = nil
+        }
+        reshowWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + deliberateHoldDelay, execute: work)
     }
 
     /// エントリの現在の連続カウント（存在しなければ 1）
@@ -218,8 +252,9 @@ final class KeyCaptureController {
         }
         let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         pressedKeys.insert(code)
-        // 文字キーが押されたなら修飾キー行はコンビネーションへ変わるので、履歴化の保留は破棄する
+        // 文字キーが押されたなら修飾キー行はコンビネーションへ変わるので、保留中の処理は破棄する
         cancelStepCommit()
+        cancelModifierReshow()
 
         let flags = KeyFormatter.relevantFlags(event.flags)
         currentModifiers = flags
@@ -333,8 +368,10 @@ final class KeyCaptureController {
         if let id = currentID, !currentIsModifierOnly {
             model.release(id: id)
             currentID = nil
-            // 修飾キーがまだ押されている間は、修飾キー単独行を新たに出さない
+            // 修飾キーがまだ押されている間は、修飾キー単独行をすぐには出さない。
+            // ただし押し続けているなら少し後に出し直す（何も表示されない状態を作らない）
             suppressModifierEntry = !currentModifiers.isEmpty
+            armModifierReshow(currentModifiers)
         }
     }
 
@@ -391,8 +428,12 @@ final class KeyCaptureController {
             if let mid = mouseEntryID {
                 model.release(id: mid)
                 mouseEntryID = nil
-                // 修飾キーがまだ押されている間は、修飾キー単独行を新たに出さない
-                suppressModifierEntry = !KeyFormatter.relevantFlags(event.flags).isEmpty
+                // クリックを終えても修飾キーを押し続けているなら、少し後に修飾キー行を
+                // 出し直す（押しているのに何も表示されない状態を作らない）
+                let held = KeyFormatter.relevantFlags(event.flags)
+                currentModifiers = held
+                suppressModifierEntry = !held.isEmpty
+                armModifierReshow(held)
             }
 
         default:
@@ -404,9 +445,10 @@ final class KeyCaptureController {
         let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         let flags = KeyFormatter.relevantFlags(event.flags)
         currentModifiers = flags
-        // 修飾キーの状態が動いたので、保留していた履歴化はいったん取り消す
-        // （必要ならこの後 armStepCommit で組み直す）
+        // 修飾キーの状態が動いたので、保留していた処理はいったん取り消す
+        // （必要ならこの後 armStepCommit / armModifierReshow で組み直す）
         cancelStepCommit()
+        cancelModifierReshow()
 
         // Caps Lock はトグルなので一瞬だけ表示（連打は ×n にまとめる）
         if code == 57 {
@@ -469,6 +511,7 @@ final class KeyCaptureController {
                 if let target = mergeTargetID(for: tokens) {
                     // 同じ修飾キーの連続押し（⌘ 連打など）: 既存行を ×n に
                     model.increment(id: target)
+                    modifierPeak = flags
                     currentID = target
                 } else {
                     // 修飾キー単独の表示を開始
@@ -476,6 +519,10 @@ final class KeyCaptureController {
                 }
                 currentIsModifierOnly = true
                 lastTypingID = nil
+            } else if currentID == nil, suppressModifierEntry {
+                // コンビネーションの後、修飾キーの構成が変わってもまだ押し続けている。
+                // そのまま押し続けるなら改めて表示する
+                armModifierReshow(flags)
             }
         }
     }
