@@ -2,7 +2,7 @@
 
 **A keystroke visualizer for macOS** — shows the keys and mouse clicks you press, large on screen.
 
-日本語のドキュメントは [README.ja.md](README.ja.md) をご覧ください。
+**[con3code.github.io/keydisp](https://con3code.github.io/keydisp/)** · 日本語のドキュメントは [README.ja.md](README.ja.md) をご覧ください。
 
 KeyDisp lives in your menu bar and displays keyboard input in real time. It is designed for
 classrooms, training sessions, presentations, screencasts, and pair programming — anywhere

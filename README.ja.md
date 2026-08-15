@@ -2,7 +2,7 @@
 
 **macOS 用キーストローク・ビジュアライザ** — 押しているキーやマウスクリックを画面に大きく表示します。
 
-English documentation is available in [README.md](README.md).
+**[con3code.github.io/keydisp](https://con3code.github.io/keydisp/)** · English documentation is available in [README.md](README.md).
 
 KeyDisp はメニューバーに常駐し、キーボード入力をリアルタイムに表示します。学校の授業、
 研修会、プレゼンテーション、スクリーンキャスト、ペアプログラミングなど、「いま何を
