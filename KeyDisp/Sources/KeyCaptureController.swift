@@ -243,7 +243,13 @@ final class KeyCaptureController {
         cancelModifierShrink()
 
         let flags = KeyFormatter.relevantFlags(event.flags)
-        currentModifiers = flags
+        // 矢印やファンクションキーには fn が暗黙に付くので、押している修飾キーとしては数えない。
+        // ただし fn を実際に押している（先に flagsChanged で届いている）場合はそのまま残す。
+        var held = flags
+        if !currentModifiers.contains(.maskSecondaryFn), KeyFormatter.hasImplicitFn(code) {
+            held.remove(.maskSecondaryFn)
+        }
+        currentModifiers = held
         let shiftOnly = flags == .maskShift
         let isChar = KeyFormatter.isCharacterKey(code)
         // 修飾キーなし、または Shift のみの文字キーは「タイピング」として扱う

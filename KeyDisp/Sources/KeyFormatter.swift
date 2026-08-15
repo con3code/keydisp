@@ -107,6 +107,12 @@ enum KeyFormatter {
         return mapped.filter { seen.insert($0).inserted }
     }
 
+    /// 矢印・ファンクションキーなどには fn フラグが暗黙に付いて届く。
+    /// 「いま押している修飾キー」としては実際に fn を押していないので取り除く。
+    static func hasImplicitFn(_ code: CGKeyCode) -> Bool {
+        implicitFnKeys.contains(code)
+    }
+
     /// 表示に関係する修飾フラグだけを取り出す
     static func relevantFlags(_ flags: CGEventFlags) -> CGEventFlags {
         var out = CGEventFlags()
