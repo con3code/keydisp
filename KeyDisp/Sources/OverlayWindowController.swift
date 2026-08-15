@@ -61,25 +61,12 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
 
     // MARK: - 表示内容に合わせた拡張
 
-    /// 現在の表示設定でキー表示 1 行が必要とする高さの目安。
-    /// OverlayRootView の文字サイズと上下パディングに、厚み・影のぶんの余裕を足したもの。
-    private var rowHeight: CGFloat {
-        let scale = CGFloat(settings.displayScale)
-        switch settings.style {
-        case .keycap:      return 56 * scale  // 文字 30pt + padding 7pt×2 + 厚み
-        case .simple:      return 58 * scale  // 文字 34pt + padding 7pt×2
-        case .customImage: return 64 * scale  // 文字 34pt + padding 10pt×2
-        }
-    }
-
     /// 設定した行数がすべて収まるのに必要な大きさ（内側の余白込み）
     private func requiredSize() -> NSSize {
         let scale = CGFloat(settings.displayScale)
-        let rows = CGFloat(max(1, Int(settings.maxRows)))
-        let padding: CGFloat = 32
         return NSSize(
             width: max(240, 260 * scale),
-            height: rows * rowHeight + (rows - 1) * 8 * scale + padding
+            height: OverlayMetrics.requiredHeight(rows: Int(settings.maxRows), settings: settings)
         )
     }
 

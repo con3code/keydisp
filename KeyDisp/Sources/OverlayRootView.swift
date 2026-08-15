@@ -1,5 +1,38 @@
 import SwiftUI
 
+/// キー表示の寸法計算。表示側とウィンドウ側で同じ値を使うためにここへまとめる。
+enum OverlayMetrics {
+    /// 折り返しのないキー表示 1 行ぶんの高さの目安
+    static func rowHeight(_ settings: AppSettings) -> CGFloat {
+        let scale = CGFloat(settings.displayScale)
+        switch settings.style {
+        case .keycap:      return 56 * scale  // 文字 30pt + padding 7pt×2 + 厚み
+        case .simple:      return 58 * scale  // 文字 34pt + padding 7pt×2
+        case .customImage: return 64 * scale  // 文字 34pt + padding 10pt×2
+        }
+    }
+
+    static func rowSpacing(_ settings: AppSettings) -> CGFloat {
+        8 * CGFloat(settings.displayScale)
+    }
+
+    /// 表示領域の内側の余白（上下合計）
+    static let padding: CGFloat = 32
+
+    /// 指定した行数を表示するのに必要な高さ
+    static func requiredHeight(rows: Int, settings: AppSettings) -> CGFloat {
+        let rows = CGFloat(max(1, rows))
+        return rows * rowHeight(settings) + (rows - 1) * rowSpacing(settings) + padding
+    }
+
+    /// 指定した高さに収まる行数
+    static func rowsThatFit(height: CGFloat, settings: AppSettings) -> Int {
+        let h = rowHeight(settings), s = rowSpacing(settings)
+        guard h > 0 else { return 1 }
+        return max(1, Int((height - padding + s) / (h + s)))
+    }
+}
+
 /// オーバーレイウィンドウの中身。
 /// 下端に揃えてキー入力の行が積み上がり、新しい行が入ると古い行が上へスライドする。
 struct OverlayRootView: View {
@@ -29,6 +62,10 @@ struct OverlayRootView: View {
     var body: some View {
         GeometryReader { geo in
             let rowMaxWidth = max(60, geo.size.width - 32)
+            // 表示領域に収まらない行は描画しない。収まらないまま描くと、
+            // いちばん見せたい新しい行が切れてしまうため、古い行から落とす
+            let fit = OverlayMetrics.rowsThatFit(height: geo.size.height, settings: settings)
+            let shown = Array(displayEntries.suffix(fit))
             ZStack(alignment: .topLeading) {
                 if settings.editMode {
                     RoundedRectangle(cornerRadius: 12)
@@ -38,7 +75,7 @@ struct OverlayRootView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 8 * settings.displayScale) {
-                    ForEach(settings.stackFromTop ? Array(displayEntries.reversed()) : displayEntries) { entry in
+                    ForEach(settings.stackFromTop ? shown.reversed() : shown) { entry in
                         KeyEntryRow(entry: entry, settings: settings, maxWidth: rowMaxWidth)
                             .opacity(entry.phase == .fading ? 0 : 1)
                             .animation(.easeOut(duration: settings.fadeDuration), value: entry.phase)
