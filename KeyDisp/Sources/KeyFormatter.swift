@@ -52,6 +52,13 @@ enum KeyFormatter {
     /// 修飾キー自体のキーコード
     static let modifierKeyCodes: Set<CGKeyCode> = [54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
 
+    /// 押し続けてもキーリピートに意味がないキー（入力モードの切替えキー）。
+    /// 何回リピートしてもモードは変わらないので、回数として数えない。
+    static let noRepeatKeyCodes: Set<CGKeyCode> = [
+        102,  // 英数 / ABC
+        104,  // かな / あいう
+    ]
+
     /// Mac 記号 → Windows 表記の対応表（ショートカット互換の対応付け）
     private static let windowsLabels: [String: String] = [
         "⌃": "Ctrl", "⌥": "Alt", "⇧": "Shift", "⌘": "Ctrl", "fn": "Fn",

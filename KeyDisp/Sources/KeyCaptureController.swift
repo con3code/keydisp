@@ -226,15 +226,18 @@ final class KeyCaptureController {
     }
 
     private func handleKeyDown(_ event: CGEvent) {
-        // 長押しの autorepeat は、コンビネーション/特殊キー行のカウントとして数える
+        let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
+
+        // 長押しの autorepeat は、コンビネーション/特殊キー行のカウントとして数える。
+        // ただし入力切替キーは何回リピートしてもモードが変わらないので数えない。
         if event.getIntegerValueField(.keyboardEventAutorepeat) != 0 {
             if settings.countRepeats, let id = currentID, !currentIsModifierOnly,
+               !KeyFormatter.noRepeatKeyCodes.contains(code),
                model.entries.first(where: { $0.id == id })?.isTyping == false {
                 model.increment(id: id)
             }
             return
         }
-        let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         pressedKeys.insert(code)
         // 文字キーが押されたなら修飾キー行はコンビネーションへ変わるので、保留中の処理は破棄する
         cancelModifierShrink()
