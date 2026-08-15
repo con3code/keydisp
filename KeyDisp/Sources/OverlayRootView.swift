@@ -215,20 +215,68 @@ struct KeyEntryRow: View {
         }
     }
 
+    /// カスタム画像を等倍で置いたときの高さ（キー表示 1 行ぶん）
+    private var imageBaseHeight: CGFloat {
+        fontSize * 1.2 + 20 * settings.displayScale
+    }
+
     @ViewBuilder
     private var customBackground: some View {
-        if !settings.customImagePath.isEmpty,
-           let image = NSImage(contentsOfFile: settings.customImagePath) {
-            Image(nsImage: image)
-                .resizable(
-                    capInsets: EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24),
-                    resizingMode: .stretch
-                )
-                .opacity(settings.backgroundEnabled ? settings.backgroundOpacity : 1)
+        if let image = CustomBackgroundImage.scaled(
+            path: settings.customImagePath, height: imageBaseHeight
+        ) {
+            // 9 分割（ナインパッチ）で引き伸ばす。四隅は元の比率のまま、
+            // 上下の中央は横に、左右の中央は縦に、中央だけ縦横に伸びる。
+            GeometryReader { geo in
+                Image(nsImage: image)
+                    .resizable(
+                        capInsets: Self.capInsets(image: image.size, target: geo.size),
+                        resizingMode: .stretch
+                    )
+                    .frame(width: geo.size.width, height: geo.size.height)
+            }
+            .opacity(settings.backgroundEnabled ? settings.backgroundOpacity : 1)
         } else {
             RoundedRectangle(cornerRadius: 12 * settings.displayScale)
                 .fill(keyColor.opacity(bgOpacity))
         }
+    }
+
+    /// 画像を縦横 3 等分した位置で切る。表示領域が小さいときは、
+    /// 四隅どうしが重ならないところまで切り幅を詰める（潰れ防止）。
+    static func capInsets(image: CGSize, target: CGSize) -> EdgeInsets {
+        let v = min(image.height / 3, max(0, target.height / 2 - 0.5))
+        let h = min(image.width / 3, max(0, target.width / 2 - 0.5))
+        return EdgeInsets(top: v, leading: h, bottom: v, trailing: h)
+    }
+}
+
+/// カスタム背景画像の読み込みと、キー表示に合わせた寸法調整をキャッシュする。
+/// 画像はキー表示 1 行ぶんの高さを基準に置き、そこから 9 分割して引き伸ばす。
+enum CustomBackgroundImage {
+    private static var cachedPath = ""
+    private static var cachedHeight: CGFloat = 0
+    private static var cached: NSImage?
+
+    static func scaled(path: String, height: CGFloat) -> NSImage? {
+        guard !path.isEmpty, height > 0 else { return nil }
+        if path == cachedPath, abs(height - cachedHeight) < 0.5 { return cached }
+
+        cachedPath = path
+        cachedHeight = height
+        guard let source = NSImage(contentsOfFile: path),
+              source.size.width > 0, source.size.height > 0 else {
+            cached = nil
+            return nil
+        }
+        // 解像度はそのままに、表示上の寸法だけ 1 行ぶんの高さへ合わせる
+        let image = (source.copy() as? NSImage) ?? source
+        image.size = NSSize(
+            width: source.size.width * (height / source.size.height),
+            height: height
+        )
+        cached = image
+        return image
     }
 }
 
