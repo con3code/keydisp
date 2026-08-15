@@ -8,6 +8,8 @@ final class KeyCaptureController {
 
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    /// 表示と実際の入力状態を定期的に突き合わせるタイマー
+    private var reconcileTimer: Timer?
 
     // 状態
     private var pressedKeys: Set<CGKeyCode> = []
@@ -90,6 +92,12 @@ final class KeyCaptureController {
         runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+
+        // 入力が止まった後でも取り残しが残らないよう、定期的に実際の状態と突き合わせる
+        reconcileTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.reconcileHeldState()
+        }
+
         isRunning = true
         return true
     }
@@ -97,6 +105,8 @@ final class KeyCaptureController {
     func stop() {
         if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
         if let runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
+        reconcileTimer?.invalidate()
+        reconcileTimer = nil
         tap = nil
         runLoopSource = nil
         isRunning = false
@@ -166,6 +176,43 @@ final class KeyCaptureController {
         DispatchQueue.main.asyncAfter(deadline: .now() + deliberateHoldDelay, execute: work)
     }
 
+    // MARK: - 取り残された表示の回収
+
+    /// いま「押されている」として扱っている行。これ以外に押しっぱなしの行があってはならない。
+    private var liveRowIDs: Set<UUID> {
+        Set([currentID, mouseEntryID].compactMap { $0 })
+    }
+
+    /// コントローラが管理していない押しっぱなしの行を解放する。
+    /// 何らかの理由で取り残された行は、ここで必ず通常のフェードに乗る。
+    private func releaseOrphanRows() {
+        let live = liveRowIDs
+        for entry in model.entries where entry.phase == .active && !live.contains(entry.id) {
+            model.release(id: entry.id)
+        }
+    }
+
+    /// 実際のキーボード・マウスの状態と突き合わせて、表示のつじつまを合わせる。
+    /// イベントを取りこぼしても（別アプリへの切替えなどで keyUp が届かない場合など）、
+    /// ここで必ず現実に追いつく。定期実行とイベント処理の両方から呼ばれる。
+    func reconcileHeldState() {
+        // 実際には離されているキーが押下中のまま残っていたら取り除く
+        for code in pressedKeys where !CGEventSource.keyState(.combinedSessionState, key: code) {
+            pressedKeys.remove(code)
+        }
+        let realFlags = KeyFormatter.relevantFlags(
+            CGEventSource.flagsState(.combinedSessionState)
+        )
+        if pressedKeys.isEmpty, realFlags.isEmpty, mouseEntryID == nil, let id = currentID {
+            // 物理的には何も押していないのに押しっぱなし扱いの行が残っている
+            model.release(id: id)
+            currentID = nil
+            currentIsModifierOnly = false
+            modifierPeak = []
+        }
+        releaseOrphanRows()
+    }
+
     /// エントリの現在の連続カウント（存在しなければ 1）
     private func entryCount(_ id: UUID) -> Int {
         model.entries.first(where: { $0.id == id })?.count ?? 1
@@ -206,6 +253,7 @@ final class KeyCaptureController {
             let button = Int(event.getIntegerValueField(.mouseEventButtonNumber))
             onMouseEvent?(type, button)
             handleMouseForDisplay(type: type, event: event, button: button)
+            releaseOrphanRows()
             return
         default:
             break
@@ -223,6 +271,9 @@ final class KeyCaptureController {
         case .flagsChanged: handleFlagsChanged(event)
         default: break
         }
+
+        // 取り残された行があればここで回収する（複雑な組み合わせの取りこぼし対策）
+        releaseOrphanRows()
     }
 
     private func handleKeyDown(_ event: CGEvent) {
