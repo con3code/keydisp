@@ -48,6 +48,9 @@ your audience needs to see exactly what you are pressing.
 Release binaries are signed with a Developer ID certificate and notarized by Apple,
 so they open without Gatekeeper warnings.
 
+For detailed usage instructions and a full settings reference, see the
+**[User Manual](docs/MANUAL.en.md)**.
+
 ### First launch — permissions
 
 KeyDisp reads keyboard input through macOS accessibility APIs, so it needs two permissions.
