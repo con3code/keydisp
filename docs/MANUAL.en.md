@@ -74,12 +74,14 @@ Click the ⌨ icon to open the menu:
 | Edit Display Mode | Adjust position, size, and design while watching a live preview |
 | Reset Position & Size | Returns the overlay to the bottom-left of the main screen at default size |
 | Settings… | Opens the settings window (⌘,) |
-| Permissions Guide… | Shows permission status and shortcuts to System Settings |
 | About KeyDisp | Version information |
 | Launch at Login | Starts KeyDisp automatically when you log in |
 | Show Dock Icon | Toggles the Dock icon |
-| Hide Menu Bar Icon | Hides the ⌨ icon (the Dock icon is enabled automatically) |
 | Quit KeyDisp | Quits the app (⌘Q) |
+
+The menu bar icon itself is toggled in Settings → General, and permission status
+lives in Settings → Permissions (the setup guide opens on its own when a
+permission is missing).
 
 > **The menu bar icon and Dock icon cannot both be hidden.** If you lose access,
 > open KeyDisp again from Finder or Launchpad and the settings window will appear.

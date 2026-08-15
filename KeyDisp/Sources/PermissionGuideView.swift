@@ -6,9 +6,6 @@ struct PermissionGuideView: View {
     @State private var accessibilityOK = Permissions.accessibilityGranted
     @State private var inputMonitoringOK = Permissions.inputMonitoringGranted
 
-    /// 両方の権限が許可されたら自動的に閉じて開始する（初回起動フロー用）。
-    /// メニューから意図的に開いた場合は false にして、閉じる操作をユーザーに委ねる。
-    var autoCloseWhenGranted: Bool = true
     var onCompleted: () -> Void
     var onClose: () -> Void
 
@@ -73,7 +70,8 @@ struct PermissionGuideView: View {
         .onReceive(timer) { _ in
             accessibilityOK = Permissions.accessibilityGranted
             inputMonitoringOK = Permissions.inputMonitoringGranted
-            if autoCloseWhenGranted && accessibilityOK && inputMonitoringOK {
+            // 許可がそろったら自動的に閉じてキー表示を始める
+            if accessibilityOK && inputMonitoringOK {
                 onCompleted()
             }
         }

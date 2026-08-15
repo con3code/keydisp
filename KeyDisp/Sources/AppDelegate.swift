@@ -296,7 +296,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let settingsItem = NSMenuItem(title: L("設定…", "Settings…"), action: #selector(showSettingsAction), keyEquivalent: ",")
         menu.addItem(settingsItem)
-        menu.addItem(NSMenuItem(title: L("権限設定ガイド…", "Permissions Guide…"), action: #selector(showGuideAction), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: L("KeyDisp について", "About KeyDisp"), action: #selector(showAboutAction), keyEquivalent: ""))
         menu.addItem(.separator())
 
@@ -308,7 +307,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         dock.state = settings.showDockIcon ? .on : .off
         menu.addItem(dock)
 
-        menu.addItem(NSMenuItem(title: L("メニューバーアイコンを隠す", "Hide Menu Bar Icon"), action: #selector(hideMenuBarIconAction), keyEquivalent: ""))
         menu.addItem(.separator())
 
         let quit = NSMenuItem(title: L("KeyDisp を終了", "Quit KeyDisp"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -386,35 +384,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    @objc private func showGuideAction() {
-        // メニューから意図的に開いた場合は、許可済みでも自動的に閉じない
-        showPermissionGuide(autoCloseWhenGranted: false)
-    }
-
-    private func showPermissionGuide(autoCloseWhenGranted: Bool = true) {
-        let view = PermissionGuideView(
-            autoCloseWhenGranted: autoCloseWhenGranted,
-            onCompleted: { [weak self] in
-                guard let self else { return }
-                self.guideWindow?.close()
-                self.startCapture()
-                if self.settings.overlayVisible { self.overlay.show() }
-            },
-            onClose: { [weak self] in
-                self?.guideWindow?.close()
-            }
-        )
-        let isNew = guideWindow == nil
-        if isNew {
+    /// 権限が足りないときのガイド。初回起動時と、キー監視を開始できなかったときに出る。
+    /// 許可されると自動的に閉じてキー表示が始まる。
+    private func showPermissionGuide() {
+        if guideWindow == nil {
+            let view = PermissionGuideView(
+                onCompleted: { [weak self] in
+                    guard let self else { return }
+                    self.guideWindow?.close()
+                    self.startCapture()
+                    if self.settings.overlayVisible { self.overlay.show() }
+                },
+                onClose: { [weak self] in
+                    self?.guideWindow?.close()
+                }
+            )
             let window = NSWindow(contentViewController: NSHostingController(rootView: view))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
             guideWindow = window
-        } else {
-            // 自動クローズ設定が呼び出しごとに変わるため、中身は毎回作り直す
-            guideWindow?.contentViewController = NSHostingController(rootView: view)
+            centerOnMouseScreen(window)
         }
-        if isNew { centerOnMouseScreen(guideWindow!) }
         guideWindow?.title = L("KeyDisp の初期設定", "KeyDisp Setup")
         guideWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -439,13 +429,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func toggleDockIconAction() {
         settings.showDockIcon.toggle()
-    }
-
-    @objc private func hideMenuBarIconAction() {
-        if !settings.showDockIcon {
-            settings.showDockIcon = true
-        }
-        settings.showMenuBarIcon = false
     }
 
     private func warnBothIconsHidden() {
