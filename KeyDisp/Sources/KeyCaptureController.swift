@@ -19,8 +19,6 @@ final class KeyCaptureController {
     private var modifierPeak: CGEventFlags = []
     /// 修飾キーが減ったときの処理を、押し続けるか確かめるまで保留しておくもの
     private var modifierShrinkWork: DispatchWorkItem?
-    /// コンビネーションの後も押し続けている修飾キーを、改めて表示するための処理
-    private var reshowWork: DispatchWorkItem?
     /// この時間だけ押し続けたら「意図して押している」とみなす。
     /// これより早く離した場合は 1 回の操作の一部として扱う。
     private let deliberateHoldDelay: TimeInterval = 0.5
@@ -112,7 +110,6 @@ final class KeyCaptureController {
         currentModifiers = []
         modifierPeak = []
         cancelModifierShrink()
-        cancelModifierReshow()
         suppressModifierEntry = false
         lastTypingID = nil
         mouseEntryID = nil
@@ -127,20 +124,29 @@ final class KeyCaptureController {
         modifierShrinkWork = nil
     }
 
-    /// 修飾キーの一部を離した状態で `deliberateHoldDelay` だけ押し続けたときの処理を予約する。
+    /// いま実際に押されているキーだけでトークン列を作る。
+    /// 修飾キーも、英数・かな・Tab のような通常のキーも同じように扱う。
+    private func heldTokens() -> [String] {
+        var tokens = KeyFormatter.modifierTokens(currentModifiers)
+        for code in pressedKeys.sorted() where !KeyFormatter.modifierKeyCodes.contains(code) {
+            tokens.append(KeyFormatter.keyLabel(code, shifted: false))
+        }
+        return tokens
+    }
+
+    /// 押していたキーの一部を離した後、`deliberateHoldDelay` だけ残りを押し続けたときの処理を予約する。
     /// - 「離すたびに履歴を残す」オン: そこまでの組み合わせを履歴として確定し、残りを新しい行にする
-    /// - オフ: 行は増やさず、同じ行を残りのキーだけの表示へ更新する
+    /// - オフ: 行は増やさず、同じ行を残りのキーだけの表示へ狭める
     ///
     /// どちらも、それより早く離しきった場合は取り消され、押した組み合わせ全体が 1 行として残る。
-    private func armModifierShrink(remaining: CGEventFlags) {
+    private func armRowNarrow() {
         cancelModifierShrink()
-        guard !remaining.isEmpty else { return }
         let work = DispatchWorkItem { [weak self] in
             guard let self,
                   let id = self.currentID,
-                  self.currentIsModifierOnly,
                   self.entryCount(id) == 1 else { return }
-            let tokens = KeyFormatter.modifierTokens(remaining)
+            let tokens = self.heldTokens()
+            guard !tokens.isEmpty else { return }
             if self.settings.stepModifierRelease {
                 self.model.release(id: id)
                 self.lastComboID = id
@@ -149,41 +155,14 @@ final class KeyCaptureController {
             } else {
                 self.model.update(id: id, tokens: tokens, isTyping: false)
             }
-            self.modifierPeak = remaining
+            self.modifierPeak = self.currentModifiers
+            // 通常のキーが残っていなければ、以後は修飾キー単独行として扱う
+            self.currentIsModifierOnly = !self.pressedKeys.contains {
+                !KeyFormatter.modifierKeyCodes.contains($0)
+            }
             self.modifierShrinkWork = nil
         }
         modifierShrinkWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + deliberateHoldDelay, execute: work)
-    }
-
-    // MARK: - コンビネーション後に押し続けている修飾キーの再表示
-
-    private func cancelModifierReshow() {
-        reshowWork?.cancel()
-        reshowWork = nil
-    }
-
-    /// コンビネーション（⌘C や ⌘+クリックなど）を終えた後も修飾キーを押し続けている場合、
-    /// `deliberateHoldDelay` 待ってから修飾キー単独の行を出し直す。
-    /// すぐ離す・続けて次の操作をする場合は取り消されるので、余計な行は増えない。
-    private func armModifierReshow(_ flags: CGEventFlags) {
-        cancelModifierReshow()
-        guard !flags.isEmpty else { return }
-        let work = DispatchWorkItem { [weak self] in
-            guard let self,
-                  self.currentID == nil,
-                  self.mouseEntryID == nil,
-                  self.currentModifiers == flags else { return }
-            self.suppressModifierEntry = false
-            self.modifierPeak = flags
-            self.currentIsModifierOnly = true
-            self.lastTypingID = nil
-            self.currentID = self.model.begin(
-                tokens: KeyFormatter.modifierTokens(flags), isTyping: false
-            )
-            self.reshowWork = nil
-        }
-        reshowWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + deliberateHoldDelay, execute: work)
     }
 
@@ -259,7 +238,6 @@ final class KeyCaptureController {
         pressedKeys.insert(code)
         // 文字キーが押されたなら修飾キー行はコンビネーションへ変わるので、保留中の処理は破棄する
         cancelModifierShrink()
-        cancelModifierReshow()
 
         let flags = KeyFormatter.relevantFlags(event.flags)
         currentModifiers = flags
@@ -366,17 +344,22 @@ final class KeyCaptureController {
         let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         pressedKeys.remove(code)
 
-        guard pressedKeys.isEmpty else { return }
+        // 何かキーが残っているなら、押し続けた場合にその表示へ狭める
+        guard pressedKeys.isEmpty else {
+            if currentID != nil { armRowNarrow() }
+            return
+        }
         // 物理キーが 1 つも押されていないなら、押しっぱなし扱いのタイピング行は残らないはず。
         // 早いタイピングでキーの押下が重なった際の取り残しをここで確実に回収する。
         model.releaseOtherTypingRows(except: currentIsModifierOnly ? nil : currentID)
         if let id = currentID, !currentIsModifierOnly {
-            model.release(id: id)
-            currentID = nil
-            // 修飾キーがまだ押されている間は、修飾キー単独行をすぐには出さない。
-            // ただし押し続けているなら少し後に出し直す（何も表示されない状態を作らない）
-            suppressModifierEntry = !currentModifiers.isEmpty
-            armModifierReshow(currentModifiers)
+            if currentModifiers.isEmpty {
+                model.release(id: id)
+                currentID = nil
+            } else {
+                // 修飾キーはまだ押されている。押し続けるなら修飾キーだけの表示に狭める
+                armRowNarrow()
+            }
         }
     }
 
@@ -431,14 +414,18 @@ final class KeyCaptureController {
 
         case .leftMouseUp, .rightMouseUp, .otherMouseUp:
             if let mid = mouseEntryID {
-                model.release(id: mid)
                 mouseEntryID = nil
-                // クリックを終えても修飾キーを押し続けているなら、少し後に修飾キー行を
-                // 出し直す（押しているのに何も表示されない状態を作らない）
                 let held = KeyFormatter.relevantFlags(event.flags)
                 currentModifiers = held
-                suppressModifierEntry = !held.isEmpty
-                armModifierReshow(held)
+                if held.isEmpty && pressedKeys.isEmpty {
+                    model.release(id: mid)
+                } else {
+                    // 修飾キーを押し続けているなら、この行を押しているキーだけの表示に狭める
+                    // （押しているのに何も表示されない状態を作らない）
+                    currentID = mid
+                    currentIsModifierOnly = false
+                    armRowNarrow()
+                }
             }
 
         default:
@@ -451,9 +438,8 @@ final class KeyCaptureController {
         let flags = KeyFormatter.relevantFlags(event.flags)
         currentModifiers = flags
         // 修飾キーの状態が動いたので、保留していた処理はいったん取り消す
-        // （必要ならこの後 armStepCommit / armModifierReshow で組み直す）
+        // （必要ならこの後 armRowNarrow で組み直す）
         cancelModifierShrink()
-        cancelModifierReshow()
 
         // Caps Lock はトグルなので一瞬だけ表示（連打は ×n にまとめる）
         if code == 57 {
@@ -473,13 +459,19 @@ final class KeyCaptureController {
         if flags.isEmpty {
             suppressModifierEntry = false
             modifierPeak = []
-            if let id = currentID, currentIsModifierOnly {
-                // 修飾キー単独行の連打をまとめられるよう、離した行を記録しておく
-                lastComboTokens = model.entries.first(where: { $0.id == id })?.tokens
-                lastComboID = id
-                model.release(id: id)
-                currentID = nil
-                currentIsModifierOnly = false
+            if let id = currentID {
+                if pressedKeys.contains(where: { !KeyFormatter.modifierKeyCodes.contains($0) }) {
+                    // 英数・かななど通常のキーがまだ押されている。
+                    // 押し続けるならそのキーだけの表示に狭める
+                    armRowNarrow()
+                } else {
+                    // 連打をまとめられるよう、離した行を記録しておく
+                    lastComboTokens = model.entries.first(where: { $0.id == id })?.tokens
+                    lastComboID = id
+                    model.release(id: id)
+                    currentID = nil
+                    currentIsModifierOnly = false
+                }
             }
         } else {
             if let id = currentID, currentIsModifierOnly {
@@ -492,8 +484,8 @@ final class KeyCaptureController {
                     currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
                 } else if !flags.isSuperset(of: modifierPeak) {
                     // 修飾キーが減った。離しきる途中の一瞬で表示を変えないよう、
-                    // 残りを押し続けたときだけ反映する（armModifierShrink を参照）
-                    armModifierShrink(remaining: flags)
+                    // 残りを押し続けたときだけ反映する（armRowNarrow を参照）
+                    armRowNarrow()
                 } else {
                     // 押し足した修飾キーは加えるが、離したぶんは消さない。
                     // 途中で片方を離しても「⇧⌘」のまま表示し続けるため。
@@ -523,10 +515,10 @@ final class KeyCaptureController {
                 }
                 currentIsModifierOnly = true
                 lastTypingID = nil
-            } else if currentID == nil, suppressModifierEntry {
-                // コンビネーションの後、修飾キーの構成が変わってもまだ押し続けている。
-                // そのまま押し続けるなら改めて表示する
-                armModifierReshow(flags)
+            } else if let id = currentID, !currentIsModifierOnly, entryCount(id) == 1 {
+                // 通常のキーを押したままで修飾キーの構成が変わった。
+                // 押し続けるなら、いま押しているキーだけの表示に整える
+                armRowNarrow()
             }
         }
     }
