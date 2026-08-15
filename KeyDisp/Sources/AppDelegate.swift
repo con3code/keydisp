@@ -376,6 +376,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(settings: settings)))
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
+            // 仮想デスクトップを移動しても、開くときはいま見ているデスクトップに出す
+            window.collectionBehavior.insert(.moveToActiveSpace)
             centerOnMouseScreen(window)
             settingsWindow = window
         }
@@ -402,6 +404,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let window = NSWindow(contentViewController: NSHostingController(rootView: view))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
+            // 仮想デスクトップを移動しても、開くときはいま見ているデスクトップに出す
+            window.collectionBehavior.insert(.moveToActiveSpace)
             guideWindow = window
             centerOnMouseScreen(window)
         }
@@ -415,6 +419,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let window = NSWindow(contentViewController: NSHostingController(rootView: AboutView()))
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
+            // 仮想デスクトップを移動しても、開くときはいま見ているデスクトップに出す
+            window.collectionBehavior.insert(.moveToActiveSpace)
             centerOnMouseScreen(window)
             aboutWindow = window
         }
