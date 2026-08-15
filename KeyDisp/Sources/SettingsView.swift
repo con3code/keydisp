@@ -128,6 +128,16 @@ struct SettingsView: View {
                     .disabled(!settings.mouseHighlight)
                 sliderRow(L("ハイライトの大きさ", "Highlight Size"), value: $settings.mouseHighlightSize, in: 30...120, format: "%.0f px")
                     .disabled(!settings.mouseHighlight)
+                Toggle(L("大きいマウスカーソル", "Large mouse pointer"), isOn: $settings.bigCursor)
+                ColorPicker(L("カーソルの色", "Pointer Color"), selection: settings.colorBinding(\.bigCursorColorHex))
+                    .disabled(!settings.bigCursor)
+                sliderRow(L("カーソルの大きさ", "Pointer Size"), value: $settings.bigCursorSize, in: 32...160, format: "%.0f px")
+                    .disabled(!settings.bigCursor)
+                Text(L("マウスカーソルに追従する大きなポインタを重ねて表示します。macOS のポインタ自体を拡大することはアプリからはできないため、標準のカーソルは先端に重なったまま残ります。システム側で本当に大きくしたい場合は、システム設定 › アクセシビリティ › ディスプレイ › ポインタのサイズ で変更できます。",
+                       "Draws a large pointer that follows the cursor. The app cannot enlarge the macOS pointer itself, so the standard cursor stays visible at the tip. To enlarge the real pointer, use System Settings › Accessibility › Display › Pointer size."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Toggle(L("修飾キー + クリックをキー表示に出す", "Show modifier + click in the key display"), isOn: $settings.showClickInKeyDisplay)
                 Text(L("⌘ や ⇧ などを押しながらクリックすると、キー表示に「⌘ + カーソルマーク」のような行が表示されます。押している間は表示され続けます。",
                        "Clicking while holding ⌘, ⇧, etc. shows a row like \"⌘ + cursor mark\" in the key display. It stays visible while the button is held."))

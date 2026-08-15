@@ -32,6 +32,8 @@ final class KeyCaptureController {
 
     /// マウスイベントの転送先（type, buttonNumber）。メインスレッドで呼ばれる。
     var onMouseEvent: ((CGEventType, Int) -> Void)?
+    /// カーソルが動いたときの通知（大きいカーソルの追従用）
+    var onMouseMoved: (() -> Void)?
 
     init(model: KeyDisplayModel, settings: AppSettings = .shared) {
         self.model = model
@@ -54,7 +56,8 @@ final class KeyCaptureController {
             (1 << CGEventType.otherMouseUp.rawValue) |
             (1 << CGEventType.leftMouseDragged.rawValue) |
             (1 << CGEventType.rightMouseDragged.rawValue) |
-            (1 << CGEventType.otherMouseDragged.rawValue)
+            (1 << CGEventType.otherMouseDragged.rawValue) |
+            (1 << CGEventType.mouseMoved.rawValue)
 
         let callback: CGEventTapCallBack = { _, type, event, userInfo in
             if let userInfo {
@@ -132,10 +135,14 @@ final class KeyCaptureController {
 
         // マウスイベントはキー表示の表示/非表示とは独立して転送する
         switch type {
+        case .mouseMoved:
+            onMouseMoved?()
+            return
         case .leftMouseDown, .leftMouseUp,
              .rightMouseDown, .rightMouseUp,
              .otherMouseDown, .otherMouseUp,
              .leftMouseDragged, .rightMouseDragged, .otherMouseDragged:
+            onMouseMoved?()
             let button = Int(event.getIntegerValueField(.mouseEventButtonNumber))
             onMouseEvent?(type, button)
             handleMouseForDisplay(type: type, event: event, button: button)

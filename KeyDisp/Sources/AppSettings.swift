@@ -111,6 +111,11 @@ final class AppSettings: ObservableObject {
     @Published var mouseHighlightSize: Double { didSet { d.set(mouseHighlightSize, forKey: "mouseHighlightSize") } }
     /// 修飾キー + クリックをキー表示にも出す（カーソルマークで表示）
     @Published var showClickInKeyDisplay: Bool { didSet { d.set(showClickInKeyDisplay, forKey: "showClickInKeyDisplay") } }
+    /// マウスカーソルに追従する大きなポインタを表示する
+    @Published var bigCursor: Bool { didSet { d.set(bigCursor, forKey: "bigCursor") } }
+    /// 大きなポインタの高さ（ポイント）
+    @Published var bigCursorSize: Double { didSet { d.set(bigCursorSize, forKey: "bigCursorSize") } }
+    @Published var bigCursorColorHex: String { didSet { d.set(bigCursorColorHex, forKey: "bigCursorColorHex") } }
 
     // MARK: 一般
     /// UI の言語
@@ -155,6 +160,9 @@ final class AppSettings: ObservableObject {
         mouseColorHex = d.object(forKey: "mouseColorHex") as? String ?? "#FFB300"
         mouseHighlightSize = d.object(forKey: "mouseHighlightSize") as? Double ?? 56
         showClickInKeyDisplay = d.object(forKey: "showClickInKeyDisplay") as? Bool ?? true
+        bigCursor = d.object(forKey: "bigCursor") as? Bool ?? false
+        bigCursorSize = d.object(forKey: "bigCursorSize") as? Double ?? 64
+        bigCursorColorHex = d.object(forKey: "bigCursorColorHex") as? String ?? "#FFFFFF"
         language = AppLanguage(rawValue: d.object(forKey: "language") as? Int ?? 0) ?? .system
         hotCornerHide = d.object(forKey: "hotCornerHide") as? Bool ?? false
         showMenuBarIcon = d.object(forKey: "showMenuBarIcon") as? Bool ?? true

@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let model = KeyDisplayModel()
     private lazy var capture = KeyCaptureController(model: model)
     private let mouseHighlight = MouseHighlightController()
+    private let bigCursor = BigCursorController()
     private var overlay: OverlayWindowController!
     private var editHUD: EditHUDPanelController?
 
@@ -43,6 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay = OverlayWindowController(model: model)
         capture.onMouseEvent = { [weak self] type, button in
             self?.mouseHighlight.handle(type: type, buttonNumber: button)
+        }
+        capture.onMouseMoved = { [weak self] in
+            self?.bigCursor.mouseMoved()
         }
 
         applyActivationPolicy()
