@@ -205,6 +205,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             .store(in: &cancellables)
 
+        // 言語切替え時、開いているウィンドウのタイトルも即座に更新する
+        settings.$language
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.refreshWindowTitles()
+            }
+            .store(in: &cancellables)
+
         settings.$overlayVisible
             .receive(on: DispatchQueue.main)
             .sink { [weak self] visible in
@@ -217,6 +226,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
             .store(in: &cancellables)
+    }
+
+    private func refreshWindowTitles() {
+        settingsWindow?.title = L("KeyDisp 設定", "KeyDisp Settings")
+        aboutWindow?.title = L("KeyDisp について", "About KeyDisp")
+        guideWindow?.title = L("KeyDisp の初期設定", "KeyDisp Setup")
+        editHUD?.updateTitle()
     }
 
     private func applyActivationPolicy(showDock: Bool? = nil) {

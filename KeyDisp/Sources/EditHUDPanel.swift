@@ -36,8 +36,13 @@ final class EditHUDPanelController: NSObject, NSWindowDelegate {
         panel.setFrameAutosaveName(Self.autosaveName)
     }
 
-    func show() {
+    /// 言語設定に合わせてタイトルを更新する（言語切替え時にも呼ばれる）
+    func updateTitle() {
         panel.title = L("表示編集モード", "Edit Display Mode")
+    }
+
+    func show() {
+        updateTitle()
         if !positioned {
             // 保存された位置が無ければメイン画面の右上に出す
             if UserDefaults.standard.string(forKey: "NSWindow Frame \(Self.autosaveName)") == nil,

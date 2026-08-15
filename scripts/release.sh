@@ -32,7 +32,7 @@ fi
 
 IDENTITY="${CODESIGN_IDENTITY:--}"
 echo "==> Code signing (identity: ${IDENTITY})"
-codesign --force --deep --options runtime --sign "$IDENTITY" "$APP"
+codesign --force --deep --options runtime --timestamp --sign "$IDENTITY" "$APP"
 codesign --verify --deep "$APP"
 
 mkdir -p dist
