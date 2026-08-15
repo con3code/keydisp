@@ -187,7 +187,14 @@ Open **Settings…** from the menu bar.
 | Key / Background Color | Color of keycaps or row background |
 | Show Background | Toggles the background |
 | Background Opacity | 0–100% |
-| Custom Background Image | Image used behind rows when the Custom Image style is selected |
+| Custom Background Image | Image used behind rows when the Custom Image style is selected. Ready-made samples live in [Samples/Backgrounds](../Samples/Backgrounds) |
+
+The background is stretched as a **nine-slice**: the image is cut into thirds on both
+axes, the corners keep their proportions, the top and bottom edges stretch only
+horizontally, the sides only vertically, and the centre fills the rest — so artwork
+stays undistorted when a row grows wide or wraps. See
+[Samples/Backgrounds/README.md](../Samples/Backgrounds/README.md) for tips on making
+your own.
 
 ### Key Labels
 
