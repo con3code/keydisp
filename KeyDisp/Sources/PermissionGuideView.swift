@@ -47,8 +47,8 @@ struct PermissionGuideView: View {
                 }
                 stepRow(
                     number: 2, name: L("入力監視", "Input Monitoring"), granted: inputMonitoringOK,
-                    detail: L("システム設定 › プライバシーとセキュリティ › 入力監視 で KeyDisp をオンにしてください。",
-                              "Turn on KeyDisp in System Settings › Privacy & Security › Input Monitoring.")
+                    detail: L("システム設定 › プライバシーとセキュリティ › 入力監視 に KeyDisp があればオンにしてください。一覧に表示されない場合もありますが、アクセシビリティが許可されていれば問題ありません。",
+                              "Turn on KeyDisp in System Settings › Privacy & Security › Input Monitoring if it is listed. It may not appear in that list at all, which is fine as long as Accessibility is granted.")
                 ) {
                     Permissions.requestInputMonitoring()
                     Permissions.openInputMonitoringSettings()

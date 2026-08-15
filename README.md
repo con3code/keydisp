@@ -53,13 +53,18 @@ For detailed usage instructions and a full settings reference, see the
 
 ### First launch — permissions
 
-KeyDisp reads keyboard input through macOS accessibility APIs, so it needs two permissions.
-A setup guide appears on first launch:
+KeyDisp reads keyboard input through macOS accessibility APIs. A setup guide appears
+on first launch:
 
-1. **System Settings › Privacy & Security › Accessibility** → enable KeyDisp
-2. **System Settings › Privacy & Security › Input Monitoring** → enable KeyDisp
+1. **System Settings › Privacy & Security › Accessibility** → enable KeyDisp *(required)*
+2. **System Settings › Privacy & Security › Input Monitoring** → enable KeyDisp if it
+   is listed there
 
-If KeyDisp is missing from those lists (e.g. after reinstalling), open
+Accessibility is the permission that matters. Input Monitoring often does not list
+KeyDisp at all — macOS treats Accessibility as covering it — and that is perfectly
+normal. If keys are showing up on screen, everything is working.
+
+If KeyDisp is missing from the Accessibility list (e.g. after reinstalling), open
 **Settings → Permissions** in the app and press the buttons there to re-register it.
 
 ## Requirements

@@ -182,8 +182,8 @@ struct SettingsView: View {
                         NotificationCenter.default.post(name: .keyDispRecheckPermissions, object: nil)
                     }
                 }
-                Text(L("「再確認」は権限の状態を確認し直し、キー監視を再起動します。「許可済み」と表示されていてもキーが表示されない場合（再インストール後に古い権限項目が残っている場合など）にお試しください。それでも直らない場合は、システム設定の一覧から KeyDisp を削除（−ボタン）し、上のボタンで再追加してください。",
-                       "\"Re-check\" verifies the permission state and restarts key capture. Try it when keys are not displayed even though permissions show as granted (e.g. a stale permission entry after reinstalling). If that doesn't help, remove KeyDisp from the list in System Settings (− button) and re-add it with the buttons above."))
+                Text(L("キー監視に必要なのは主にアクセシビリティ権限です。入力監視はシステム設定の一覧に KeyDisp が表示されないことがありますが、アクセシビリティが許可されていれば問題ありません。\n「再確認」は権限の状態を確認し直し、キー監視を再起動します。「許可済み」と表示されていてもキーが表示されない場合（再インストール後に古い権限項目が残っている場合など）にお試しください。それでも直らない場合は、システム設定の一覧から KeyDisp を削除（−ボタン）し、上のボタンで再追加してください。",
+                       "Accessibility is the permission that matters for key capture. KeyDisp may not appear in the Input Monitoring list in System Settings at all, which is fine as long as Accessibility is granted.\n\"Re-check\" verifies the permission state and restarts key capture. Try it when keys are not displayed even though permissions show as granted (e.g. a stale permission entry after reinstalling). If that doesn't help, remove KeyDisp from the list in System Settings (− button) and re-add it with the buttons above."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
