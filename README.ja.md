@@ -43,12 +43,8 @@ KeyDisp はメニューバーに常駐し、キーボード入力をリアルタ
 1. [Releases](../../releases) から最新の `KeyDisp-vX.Y.Z.zip` をダウンロードして展開します。
 2. `KeyDisp.app` を `/Applications` フォルダへ移動して開きます。
 
-> **注意（未署名ビルドの場合）:** 「開発元が未確認のため開けません」と表示されたときは、
-> `KeyDisp.app` を右クリック → **開く** → **開く**、またはターミナルで次を実行してください:
->
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/KeyDisp.app
-> ```
+リリースのバイナリは Developer ID 証明書で署名し、Apple の公証（notarization）を
+受けているため、Gatekeeper の警告なしで開けます。
 
 ### 初回起動 — 権限の設定
 

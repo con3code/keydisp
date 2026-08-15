@@ -45,12 +45,8 @@ your audience needs to see exactly what you are pressing.
 1. Download the latest `KeyDisp-vX.Y.Z.zip` from [Releases](../../releases) and unzip it.
 2. Move `KeyDisp.app` to your `/Applications` folder and open it.
 
-> **Note (unsigned builds):** if macOS reports that the app "cannot be opened because it is
-> from an unidentified developer", right-click `KeyDisp.app` → **Open** → **Open**, or run:
->
-> ```bash
-> xattr -dr com.apple.quarantine /Applications/KeyDisp.app
-> ```
+Release binaries are signed with a Developer ID certificate and notarized by Apple,
+so they open without Gatekeeper warnings.
 
 ### First launch — permissions
 
