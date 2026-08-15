@@ -80,6 +80,8 @@ final class AppSettings: ObservableObject {
     @Published var showAllKeys: Bool { didSet { d.set(showAllKeys, forKey: "showAllKeys") } }
     /// 同じキーの連続押し・長押しリピートを ×n バッジでまとめる
     @Published var countRepeats: Bool { didSet { d.set(countRepeats, forKey: "countRepeats") } }
+    /// 修飾キーを 1 つ離すたびに、その時点の組み合わせを履歴として残す
+    @Published var stepModifierRelease: Bool { didSet { d.set(stepModifierRelease, forKey: "stepModifierRelease") } }
 
     // MARK: デザイン
     @Published var style: KeyStyle { didSet { d.set(style.rawValue, forKey: "keyStyle") } }
@@ -144,6 +146,7 @@ final class AppSettings: ObservableObject {
         stackFromTop = d.object(forKey: "stackFromTop") as? Bool ?? false
         showAllKeys = d.object(forKey: "showAllKeys") as? Bool ?? false
         countRepeats = d.object(forKey: "countRepeats") as? Bool ?? true
+        stepModifierRelease = d.object(forKey: "stepModifierRelease") as? Bool ?? false
         style = KeyStyle(rawValue: d.object(forKey: "keyStyle") as? Int ?? 1) ?? .keycap
         textColorHex = d.object(forKey: "textColorHex") as? String ?? "#FFFFFF"
         keyColorHex = d.object(forKey: "keyColorHex") as? String ?? "#1C1C22"

@@ -401,6 +401,14 @@ final class KeyCaptureController {
                     model.release(id: id)
                     modifierPeak = flags
                     currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
+                } else if settings.stepModifierRelease, !flags.isSuperset(of: modifierPeak) {
+                    // 「離すたびに履歴を残す」: 修飾キーが減ったら、そこまでの組み合わせを
+                    // 履歴として確定させ、まだ押されているぶんを新しい行にする
+                    model.release(id: id)
+                    lastComboID = id
+                    lastComboTokens = model.entries.first(where: { $0.id == id })?.tokens
+                    modifierPeak = flags
+                    currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
                 } else {
                     // 押し足した修飾キーは加えるが、離したぶんは消さない。
                     // 途中で片方を離しても「⇧⌘」のまま表示し続けるため。

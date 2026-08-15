@@ -22,6 +22,11 @@ struct SettingsView: View {
                        "Repeated presses or held key repeats of the same combination are shown as a count like \"⌘V ×3\" instead of new rows."))
                     .font(.caption)
                     .foregroundColor(.secondary)
+                Toggle(L("修飾キーを離すたびに履歴を残す", "Keep a row each time a modifier is released"), isOn: $settings.stepModifierRelease)
+                Text(L("オフのときは、⌘⇧ を押して片方ずつ離しても「⇧⌘」の 1 行にまとまります。オンにすると離すたびにその時点の組み合わせが履歴として残り、押している組み合わせが新しい行に出ます（⇧⌘ → ⇧）。押し引きの手順そのものを見せたいときに使います。",
+                       "When off, pressing ⌘⇧ and releasing them one by one stays a single \"⇧⌘\" row. When on, each release leaves the combination so far as history and the keys still held appear as a new row (⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
                 sliderRow(L("表示の持続時間", "Hold Duration"), value: $settings.holdDuration, in: 0...5, format: L("%.1f 秒", "%.1f s"))
                 sliderRow(L("フェードアウトの長さ", "Fade-out Duration"), value: $settings.fadeDuration, in: 0.1...4, format: L("%.1f 秒", "%.1f s"))
