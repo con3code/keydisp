@@ -23,7 +23,7 @@ final class KeyCaptureController {
     private var reshowWork: DispatchWorkItem?
     /// この時間だけ押し続けたら「意図して押している」とみなす。
     /// これより早く離した場合は 1 回の操作の一部として扱う。
-    private let deliberateHoldDelay: TimeInterval = 1.0
+    private let deliberateHoldDelay: TimeInterval = 0.7
     /// コンボのキーを離した後、修飾キーだけが残っている間は
     /// 修飾キー単独行を出さないためのフラグ
     private var suppressModifierEntry = false
