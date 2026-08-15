@@ -14,6 +14,9 @@ final class KeyCaptureController {
     private var currentID: UUID?
     private var currentIsModifierOnly = false
     private var currentModifiers: CGEventFlags = []
+    /// 修飾キー単独行に表示する内容。一連の操作で押された修飾キーの最大集合を保つ。
+    /// （⌘⇧ を押して片方を先に離しても、表示は「⇧⌘」のまま残す）
+    private var modifierPeak: CGEventFlags = []
     /// コンボのキーを離した後、修飾キーだけが残っている間は
     /// 修飾キー単独行を出さないためのフラグ
     private var suppressModifierEntry = false
@@ -100,6 +103,7 @@ final class KeyCaptureController {
         currentID = nil
         currentIsModifierOnly = false
         currentModifiers = []
+        modifierPeak = []
         suppressModifierEntry = false
         lastTypingID = nil
         mouseEntryID = nil
@@ -126,7 +130,8 @@ final class KeyCaptureController {
 
     // MARK: - イベント処理
 
-    private func handle(type: CGEventType, event: CGEvent) {
+    /// イベントの入口。イベントタップから呼ばれるほか、テストからも直接呼べる。
+    func handle(type: CGEventType, event: CGEvent) {
         // タイムアウト等でタップが無効化されたら再度有効にする
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
@@ -378,6 +383,7 @@ final class KeyCaptureController {
 
         if flags.isEmpty {
             suppressModifierEntry = false
+            modifierPeak = []
             if let id = currentID, currentIsModifierOnly {
                 // 修飾キー単独行の連打をまとめられるよう、離した行を記録しておく
                 lastComboTokens = model.entries.first(where: { $0.id == id })?.tokens
@@ -388,16 +394,18 @@ final class KeyCaptureController {
             }
         } else {
             if let id = currentID, currentIsModifierOnly {
-                let tokens = KeyFormatter.modifierTokens(flags)
                 if entryCount(id) > 1 {
                     // 連打カウント付きの行（⌘ ×3 など）は残し、新しい修飾キー構成は新規行に。
                     // この押下で加算した 1 回ぶんは差し戻す
                     model.decrement(id: id)
                     model.release(id: id)
-                    currentID = model.begin(tokens: tokens, isTyping: false)
+                    modifierPeak = flags
+                    currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
                 } else {
-                    // 修飾キーが追加/削除された → 表示を更新
-                    model.update(id: id, tokens: tokens, isTyping: false)
+                    // 押し足した修飾キーは加えるが、離したぶんは消さない。
+                    // 途中で片方を離しても「⇧⌘」のまま表示し続けるため。
+                    modifierPeak.formUnion(flags)
+                    model.update(id: id, tokens: KeyFormatter.modifierTokens(modifierPeak), isTyping: false)
                 }
             } else if currentID == nil, !suppressModifierEntry {
                 // タイピングの連結が生きている間の Shift 単独押下は、大文字や
