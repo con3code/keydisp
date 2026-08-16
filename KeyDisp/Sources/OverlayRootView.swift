@@ -25,13 +25,33 @@ enum OverlayMetrics {
         return rows * rowHeight(settings) + (rows - 1) * rowSpacing(settings) + padding
     }
 
-    /// トークン 1 個ぶんの幅の目安（折り返し位置の計算用）
-    static func tokenWidth(_ settings: AppSettings) -> CGFloat {
+    /// トークン 1 個ぶんの幅の目安（折り返し位置の計算用）。
+    /// Windows 表記の「Ctrl」「BackSpace」のような複数文字のラベルは
+    /// 記号 1 つのキーよりずっと横に広いので、ラベルを実際に測って見積もる。
+    static func tokenWidth(_ token: String, settings: AppSettings) -> CGFloat {
         let scale = CGFloat(settings.displayScale)
         switch settings.style {
-        case .keycap:               return 57 * scale  // 最小幅 + 左右余白 + 間隔
-        case .simple, .customImage: return 22 * scale  // 文字 1 つぶん
+        case .keycap:               return keycapWidth(token) * scale
+        case .simple, .customImage: return 22 * scale * CGFloat(max(1, token.count))
         }
+    }
+
+    /// 表示倍率 1 のときのキーキャップ 1 個ぶんの幅（隣との間隔込み）
+    private static var keycapWidthCache: [String: CGFloat] = [:]
+    private static func keycapWidth(_ token: String) -> CGFloat {
+        if let w = keycapWidthCache[token] { return w }
+        let font = NSFont.systemFont(ofSize: 30, weight: .bold)
+        let textWidth = (token as NSString).size(withAttributes: [.font: font]).width
+        // KeycapView の最小幅 38 + 左右余白 7×2 + 隣との間隔 5
+        let w = max(38, textWidth) + 14 + 5
+        keycapWidthCache[token] = w
+        return w
+    }
+
+    /// キーとキーの間の「+」が占める幅（キーキャップ表示で「+」を出しているときだけ）
+    static func separatorWidth(_ settings: AppSettings) -> CGFloat {
+        guard settings.style == .keycap, settings.plusSeparator else { return 0 }
+        return 18 * CGFloat(settings.displayScale)
     }
 
     /// 折り返して増えた 1 行ぶんの高さ
@@ -43,9 +63,10 @@ enum OverlayMetrics {
         }
     }
 
-    /// 1 行に収まるトークン（キー）の数
+    /// 1 行に収まるトークン（キー）の数。
+    /// タイピングの折り返し用なので、1 文字ぶんの幅で数える。
     static func tokensPerLine(width: CGFloat, settings: AppSettings) -> Int {
-        max(1, Int(width / tokenWidth(settings)))
+        max(1, Int(width / tokenWidth("A", settings: settings)))
     }
 
     /// キーが 1 つずつ独立して並ぶスタイルかどうか。
@@ -57,15 +78,31 @@ enum OverlayMetrics {
         }
     }
 
-    /// トークン数と幅から、折り返して何行になるかを見積もる
-    static func wrappedLines(tokenCount: Int, width: CGFloat, settings: AppSettings) -> Int {
-        let perLine = max(1, Int(width / tokenWidth(settings)))
-        return max(1, Int(ceil(Double(tokenCount) / Double(perLine))))
+    /// トークンを順に並べて、折り返して何行になるかを見積もる
+    static func wrappedLines(
+        tokens: [String], isTyping: Bool, width: CGFloat, settings: AppSettings
+    ) -> Int {
+        let gap = isTyping ? 0 : separatorWidth(settings)
+        var lines = 1
+        var used: CGFloat = 0
+        for token in tokens {
+            let w = tokenWidth(token, settings: settings)
+            let need = used > 0 ? gap + w : w
+            if used > 0 && used + need > width {
+                lines += 1
+                used = w
+            } else {
+                used += need
+            }
+        }
+        return lines
     }
 
     /// 1 行が折り返しも含めて占める高さ
     static func height(of entry: KeyEntry, width: CGFloat, settings: AppSettings) -> CGFloat {
-        let lines = wrappedLines(tokenCount: entry.tokens.count, width: width, settings: settings)
+        let lines = wrappedLines(
+            tokens: entry.tokens, isTyping: entry.isTyping, width: width, settings: settings
+        )
         return rowHeight(settings) + CGFloat(lines - 1) * extraLineHeight(settings)
     }
 
@@ -86,11 +123,10 @@ enum OverlayMetrics {
                     // 1 行だけでも収まらない: 新しい文字を残して先頭を削る
                     var trimmed = entry
                     let maxLines = max(1, Int((availH - rowHeight(settings)) / extraLineHeight(settings)) + 1)
-                    let perLine = max(1, Int(availW / tokenWidth(settings)))
-                    let keep = max(1, maxLines * perLine)
-                    if trimmed.tokens.count > keep {
-                        trimmed.tokens = Array(trimmed.tokens.suffix(keep))
-                    }
+                    trimmed.tokens = tokensFitting(
+                        entry.tokens, isTyping: entry.isTyping,
+                        lines: maxLines, width: availW, settings: settings
+                    )
                     result.append(trimmed)
                 }
                 break
@@ -99,6 +135,24 @@ enum OverlayMetrics {
             result.insert(entry, at: 0)
         }
         return result
+    }
+
+    /// 指定した行数に収まるいちばん長い末尾を返す（新しいキーほど残す）。
+    /// 末尾を伸ばすほど行数は減らないので、二分探索で境目を求める。
+    private static func tokensFitting(
+        _ tokens: [String], isTyping: Bool, lines: Int, width: CGFloat, settings: AppSettings
+    ) -> [String] {
+        guard tokens.count > 1 else { return tokens }
+        var lo = 1, hi = tokens.count
+        while lo < hi {
+            let mid = (lo + hi + 1) / 2
+            let fits = wrappedLines(
+                tokens: Array(tokens.suffix(mid)), isTyping: isTyping,
+                width: width, settings: settings
+            ) <= lines
+            if fits { lo = mid } else { hi = mid - 1 }
+        }
+        return Array(tokens.suffix(lo))
     }
 }
 
