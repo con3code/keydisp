@@ -414,9 +414,13 @@ final class KeyCaptureController {
                 // かな入力モード: JIS かな配列のひらがな・記号で表示
                 token = kana
             } else {
+                // 文章に続けるスペースは Windows 表記でも「␣」のまま。
+                // 「Space」だと文章の途中に単語が混ざって読めなくなるため。
+                // 単独で押したときは特殊キーとして従来どおり表記設定に従う。
                 token = KeyFormatter.keyLabel(
                     code, shifted: shiftOnly,
                     capsLock: event.flags.contains(.maskAlphaShift),
+                    applyLabelStyle: false,
                     preserveCase: settings.distinguishCase
                 )
             }
