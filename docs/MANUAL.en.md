@@ -123,8 +123,7 @@ Pressing the same key or shortcut repeatedly is grouped as a count — e.g. `⌘
 instead of adding new rows (on by default).
 
 - Key repeats from holding a key down (e.g. holding ⌫) are counted the same way
-- Continuous typing stays on one row, and a space typed mid-sentence joins it rather than splitting it.
-  On reaching the right edge, typing continues on a fresh row like a typewriter
+- Continuous typing stays on one row, and a space typed mid-sentence joins it rather than splitting it
 - A small bounce animation signals each increment
 - If a different input comes in between, a new row is started instead
 
