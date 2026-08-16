@@ -220,6 +220,8 @@
   /* ---------- datasheet sections ---------- */
   section { border-top: 1px solid var(--line); padding-block: 52px; }
   .sheet { display: grid; grid-template-columns: 190px 1fr; gap: 40px; }
+  /* 表の min-width がセクションを押し広げないように（横スクロールは .table-scroll が受ける） */
+  .sheet > * { min-width: 0; }
   @media (max-width: 780px) { .sheet { grid-template-columns: 1fr; gap: 18px; } }
 
   .eyebrow {
@@ -573,14 +575,26 @@
           <div>
             <h3 class="ja">すぐ隠せる</h3>
             <h3 class="en">Hide it instantly</h3>
-            <p class="ja">⌥⌘K で切り替え。カーソルを画面の下端へ置いている間だけ隠すこともできます。</p>
-            <p class="en">Toggle with ⌥⌘K, or park the cursor at the bottom edge to hide it while it rests there.</p>
+            <p class="ja">⌥⌘K で切り替え。カーソルを画面の下端に置いている間は隠し、上端に置いている間は履歴を消さずに残せます。</p>
+            <p class="en">Toggle with ⌥⌘K. Park the cursor at the bottom edge to hide the display, or at the top edge to keep the history from fading.</p>
           </div>
           <div>
             <h3 class="ja">積み上げ / ぶら下がり</h3>
             <h3 class="en">Stack or hang</h3>
             <p class="ja">新しい行を下から積むか、上から下げるか。表示する行数も 1〜8 行で選べます。</p>
             <p class="en">New rows can stack up from the bottom or hang down from the top, 1–8 rows deep.</p>
+          </div>
+          <div>
+            <h3 class="ja">押した順に見せられる</h3>
+            <h3 class="en">Show the order you press</h3>
+            <p class="ja">修飾キーを実際に押した順で並べられます。区切りの判定時間も調整でき、手順の説明がそのまま伝わります。</p>
+            <p class="en">Modifiers can appear in the order you actually pressed them, with an adjustable timing for when a release splits the row.</p>
+          </div>
+          <div>
+            <h3 class="ja">⌥ で入る記号も伝わる</h3>
+            <h3 class="en">⌥ symbols, spelled out</h3>
+            <p class="ja">「⌥E → ´」のように、⌥ で入力される記号やアクセントを併記できます。連続する矢印キーのまとめ方も選べます。</p>
+            <p class="en">Combinations like ⌥E can show the character they type — “⌥E → ´”. Arrow keys can group into one row, too.</p>
           </div>
           <div>
             <h3 class="ja">日本語 / 英語 UI</h3>
