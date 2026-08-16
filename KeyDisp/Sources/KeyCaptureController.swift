@@ -219,10 +219,45 @@ final class KeyCaptureController {
         case .off:          canJoin = false
         }
 
-        if canJoin, let id = lastArrowID, model.phase(of: id) != nil, model.append(id: id, token: token) {
-            currentID = id
+        if canJoin, let id = lastArrowID, model.phase(of: id) != nil {
+            if entryCount(id) > 1 {
+                // ×n になった行へ別の矢印を足すと「→ ×4」が「→↓ ×4」に化けてしまう。
+                // この押下で加算した 1 回ぶんを差し戻して履歴に残し、
+                // いま押している組み合わせは新しい行にする（コンボと同じ扱い）
+                model.decrement(id: id)
+                model.release(id: id)
+                let tokens = (model.entries.first(where: { $0.id == id })?.tokens ?? []) + [token]
+                let newID = model.begin(tokens: tokens, isTyping: false)
+                currentID = newID
+                currentIsModifierOnly = false
+                lastArrowID = newID
+                lastArrowTime = now
+                lastTypingID = nil
+                lastComboID = newID
+                lastComboTokens = tokens
+                return true
+            }
+            if model.append(id: id, token: token) {
+                currentID = id
+                currentIsModifierOnly = false
+                lastArrowTime = now
+                // 行の中身が変わったので、×n のまとめ先の照合にも増えた後の並びを使う
+                lastComboID = id
+                lastComboTokens = model.entries.first(where: { $0.id == id })?.tokens ?? []
+                return true
+            }
+        }
+
+        // 同じ矢印だけを続けて押した場合（同時押しでまとめられなかった場合）は、
+        // 他のキーと同じく「同じキーの連続入力を ×n でまとめる」の設定に従う
+        if let target = mergeTargetID(for: [token]) {
+            if let id = currentID, id != target { model.release(id: id) }
+            model.increment(id: target)
+            currentID = target
             currentIsModifierOnly = false
+            lastArrowID = target
             lastArrowTime = now
+            lastTypingID = nil
             return true
         }
 
