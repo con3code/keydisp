@@ -343,10 +343,10 @@ to detect the input style, so leave it off if you type romaji.
 
 1. Choose "Quit KeyDisp" from the menu bar
 2. Move `/Applications/KeyDisp.app` to the Trash
-3. (Optional) Remove KeyDisp from Accessibility and Input Monitoring in
+3. (Optional) Remove KeyDisp from Input Monitoring in
    System Settings › Privacy & Security
-4. (Optional) Delete the preferences file:
-   `~/Library/Preferences/dev.rin.KeyDisp.plist`
+4. (Optional) Delete its container:
+   `~/Library/Containers/dev.con3.KeyDisp`
 
 ---
 

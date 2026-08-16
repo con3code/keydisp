@@ -334,9 +334,9 @@ A. かな表示は「かな入力」ユーザー専用のオプションです�
 
 1. メニューバーから「KeyDisp を終了」
 2. `/Applications/KeyDisp.app` をゴミ箱へ
-3. （任意）システム設定 › プライバシーとセキュリティ の「アクセシビリティ」と
-   「入力監視」から KeyDisp を削除
-4. （任意）設定ファイルの削除: `~/Library/Preferences/dev.rin.KeyDisp.plist`
+3. （任意）システム設定 › プライバシーとセキュリティ の「入力監視」から KeyDisp を削除
+4. （任意）設定ファイルの削除: コンテナごと削除するのが確実です
+   `~/Library/Containers/dev.con3.KeyDisp`
 
 ---
 
