@@ -30,9 +30,13 @@ targets:
     entitlements:
       path: KeyDisp/KeyDisp.entitlements
       properties:
-        # 開発ビルド用: サンドボックス無効（CGEventTap によるキー監視のため）。
-        # App Store 配信時の注意は README.md を参照。
-        com.apple.security.app-sandbox: false
+        # App Store（サンドボックス）対応版。
+        # キー監視は listen-only の CGEventTap + 入力監視（Input Monitoring）権限で行う。
+        # サンドボックスではアクセシビリティ権限が使えないため、判定は入力監視のみ。
+        # 従来のアクセシビリティ基準の実装は legacy/developer-id ブランチにある。
+        com.apple.security.app-sandbox: true
+        # カスタム背景画像（ユーザーが選択したファイル）の読み取り用
+        com.apple.security.files.user-selected.read-only: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.rin.KeyDisp

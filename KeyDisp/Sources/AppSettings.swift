@@ -265,4 +265,36 @@ extension AppSettings {
             set: { self[keyPath: keyPath] = NSColor($0).hexString }
         )
     }
+
+    // MARK: - カスタム背景画像（サンドボックス対応）
+
+    /// 画像をセキュリティスコープ付きブックマークとして保存する。
+    /// サンドボックスではパス文字列だけでは再起動後にファイルを読めないため。
+    func setCustomImage(url: URL) {
+        if let bookmark = try? url.bookmarkData(
+            options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil
+        ) {
+            d.set(bookmark, forKey: "customImageBookmark")
+        }
+        customImagePath = url.path
+    }
+
+    /// 起動時にブックマークを解決して、画像へのアクセス権を回復する。
+    /// アクセス権はアプリ終了まで保持する（stop は呼ばない）。
+    func restoreCustomImageAccess() {
+        guard let bookmark = d.data(forKey: "customImageBookmark") else { return }
+        var stale = false
+        guard let url = try? URL(
+            resolvingBookmarkData: bookmark, options: .withSecurityScope,
+            relativeTo: nil, bookmarkDataIsStale: &stale
+        ) else { return }
+        _ = url.startAccessingSecurityScopedResource()
+        customImagePath = url.path
+        if stale, let fresh = try? url.bookmarkData(
+            options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil
+        ) {
+            d.set(fresh, forKey: "customImageBookmark")
+        }
+    }
+
 }

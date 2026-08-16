@@ -4,7 +4,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
-    @State private var accessibilityOK = Permissions.accessibilityGranted
     @State private var inputMonitoringOK = Permissions.inputMonitoringGranted
 
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
@@ -23,7 +22,6 @@ struct SettingsView: View {
         }
         .frame(width: 520, height: 580)
         .onReceive(timer) { _ in
-            accessibilityOK = Permissions.accessibilityGranted
             inputMonitoringOK = Permissions.inputMonitoringGranted
         }
     }
@@ -258,13 +256,9 @@ struct SettingsView: View {
 
     @ViewBuilder private var permissionsSection: some View {
             Section(L("権限", "Permissions")) {
-                permissionRow(L("アクセシビリティ", "Accessibility"), granted: accessibilityOK) {
+                permissionRow(L("入力監視", "Input Monitoring"), granted: inputMonitoringOK) {
                     // 再リクエストすることで、一覧から削除された場合でも
                     // システム設定のリストに KeyDisp が再追加される
-                    Permissions.requestAccessibility()
-                    Permissions.openAccessibilitySettings()
-                }
-                permissionRow(L("入力監視", "Input Monitoring"), granted: inputMonitoringOK) {
                     Permissions.requestInputMonitoring()
                     Permissions.openInputMonitoringSettings()
                 }
@@ -272,13 +266,12 @@ struct SettingsView: View {
                     Text(L("動作がおかしいとき", "If it doesn't seem to work"))
                     Spacer()
                     Button(L("再確認", "Re-check")) {
-                        accessibilityOK = Permissions.accessibilityGranted
                         inputMonitoringOK = Permissions.inputMonitoringGranted
                         NotificationCenter.default.post(name: .keyDispRecheckPermissions, object: nil)
                     }
                 }
-                Text(L("キー監視に必要なのは主にアクセシビリティ権限です。入力監視はシステム設定の一覧に KeyDisp が表示されないことがありますが、アクセシビリティが許可されていれば問題ありません。\n「再確認」は権限の状態を確認し直し、キー監視を再起動します。「許可済み」と表示されていてもキーが表示されない場合（再インストール後に古い権限項目が残っている場合など）にお試しください。それでも直らない場合は、システム設定の一覧から KeyDisp を削除（−ボタン）し、上のボタンで再追加してください。",
-                       "Accessibility is the permission that matters for key capture. KeyDisp may not appear in the Input Monitoring list in System Settings at all, which is fine as long as Accessibility is granted.\n\"Re-check\" verifies the permission state and restarts key capture. Try it when keys are not displayed even though permissions show as granted (e.g. a stale permission entry after reinstalling). If that doesn't help, remove KeyDisp from the list in System Settings (− button) and re-add it with the buttons above."))
+                Text(L("キー監視には「入力監視」の権限が必要です。\n「再確認」は権限の状態を確認し直し、キー監視を再起動します。「許可済み」と表示されていてもキーが表示されない場合（再インストール後に古い権限項目が残っている場合など）にお試しください。それでも直らない場合は、システム設定の一覧から KeyDisp を削除（−ボタン）し、上のボタンで再追加してください。",
+                       "Key capture requires the Input Monitoring permission.\n\"Re-check\" verifies the permission state and restarts key capture. Try it when keys are not displayed even though the permission shows as granted (e.g. a stale permission entry after reinstalling). If that doesn't help, remove KeyDisp from the list in System Settings (− button) and re-add it with the button above."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -323,7 +316,8 @@ struct SettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         if panel.runModal() == .OK, let url = panel.url {
-            settings.customImagePath = url.path
+            // サンドボックスでは再起動後もファイルへアクセスできるよう、ブックマークで保存する
+            settings.setCustomImage(url: url)
         }
     }
 }

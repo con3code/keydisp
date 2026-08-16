@@ -3,7 +3,6 @@ import SwiftUI
 /// 初回起動時などに表示する、権限設定への誘導画面
 struct PermissionGuideView: View {
     @ObservedObject private var settings = AppSettings.shared
-    @State private var accessibilityOK = Permissions.accessibilityGranted
     @State private var inputMonitoringOK = Permissions.inputMonitoringGranted
 
     var onCompleted: () -> Void
@@ -23,11 +22,11 @@ struct PermissionGuideView: View {
             Text(L("""
             KeyDisp はキーボード入力を画面に大きく表示するアプリです。
             キー入力を読み取るために、macOS の
-            「プライバシーとセキュリティ」で以下の許可が必要です。
+            「プライバシーとセキュリティ」で「入力監視」の許可が必要です。
             """, """
             KeyDisp displays your keystrokes on screen.
-            To read keyboard input, it needs the following
-            permissions in macOS Privacy & Security settings.
+            To read keyboard input, it needs the Input Monitoring
+            permission in macOS Privacy & Security settings.
             """))
             .multilineTextAlignment(.center)
             .foregroundColor(.secondary)
@@ -37,17 +36,9 @@ struct PermissionGuideView: View {
 
             VStack(spacing: 10) {
                 stepRow(
-                    number: 1, name: L("アクセシビリティ", "Accessibility"), granted: accessibilityOK,
-                    detail: L("システム設定 › プライバシーとセキュリティ › アクセシビリティ で KeyDisp をオンにしてください。",
-                              "Turn on KeyDisp in System Settings › Privacy & Security › Accessibility.")
-                ) {
-                    Permissions.requestAccessibility()
-                    Permissions.openAccessibilitySettings()
-                }
-                stepRow(
-                    number: 2, name: L("入力監視", "Input Monitoring"), granted: inputMonitoringOK,
-                    detail: L("システム設定 › プライバシーとセキュリティ › 入力監視 に KeyDisp があればオンにしてください。一覧に表示されない場合もありますが、アクセシビリティが許可されていれば問題ありません。",
-                              "Turn on KeyDisp in System Settings › Privacy & Security › Input Monitoring if it is listed. It may not appear in that list at all, which is fine as long as Accessibility is granted.")
+                    number: 1, name: L("入力監視", "Input Monitoring"), granted: inputMonitoringOK,
+                    detail: L("システム設定 › プライバシーとセキュリティ › 入力監視 で KeyDisp をオンにしてください。一覧にない場合は「設定を開く」を押すと（オフの状態で）追加されます。",
+                              "Turn on KeyDisp in System Settings › Privacy & Security › Input Monitoring. If it is not listed, press \"Open Settings\" to add it (switched off).")
                 ) {
                     Permissions.requestInputMonitoring()
                     Permissions.openInputMonitoringSettings()
@@ -64,16 +55,15 @@ struct PermissionGuideView: View {
                 Spacer()
                 Button(L("開始", "Start")) { onCompleted() }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!(accessibilityOK && inputMonitoringOK))
+                    .disabled(!inputMonitoringOK)
             }
         }
         .padding(24)
         .frame(width: 440)
         .onReceive(timer) { _ in
-            accessibilityOK = Permissions.accessibilityGranted
             inputMonitoringOK = Permissions.inputMonitoringGranted
-            // 許可がそろったら自動的に閉じてキー表示を始める
-            if accessibilityOK && inputMonitoringOK {
+            // 許可されたら自動的に閉じてキー表示を始める
+            if inputMonitoringOK {
                 onCompleted()
             }
         }

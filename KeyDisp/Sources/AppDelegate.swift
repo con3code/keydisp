@@ -41,6 +41,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - ライフサイクル
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // サンドボックスでカスタム背景画像へのアクセス権を回復する（ブックマーク解決）
+        settings.restoreCustomImageAccess()
         overlay = OverlayWindowController(model: model)
         capture.onMouseEvent = { [weak self] type, button in
             self?.mouseHighlight.handle(type: type, buttonNumber: button)
