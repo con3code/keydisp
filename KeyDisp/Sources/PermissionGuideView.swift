@@ -32,6 +32,8 @@ struct PermissionGuideView: View {
             .multilineTextAlignment(.center)
             .foregroundColor(.secondary)
             .font(.system(size: 12.5))
+            // これがないと、ウィンドウ側で高さを詰められたときに末尾が「…」で切れる
+            .fixedSize(horizontal: false, vertical: true)
 
             VStack(spacing: 10) {
                 stepRow(

@@ -24,6 +24,8 @@ struct AboutView: View {
                 .multilineTextAlignment(.center)
                 .font(.system(size: 12.5))
                 .foregroundColor(.secondary)
+                // これがないと、ウィンドウ側で高さを詰められたときに末尾が「…」で切れる
+                .fixedSize(horizontal: false, vertical: true)
             Divider().frame(width: 200)
             Text(Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as? String ?? "")
                 .font(.caption2)

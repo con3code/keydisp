@@ -171,6 +171,11 @@ struct SettingsView: View {
                     .disabled(!settings.mouseHighlight)
                 sliderRow(L("ハイライトの大きさ", "Highlight Size"), value: $settings.mouseHighlightSize, in: 30...120, format: "%.0f px")
                     .disabled(!settings.mouseHighlight)
+                Text(L("クリックした瞬間と、ボタンを押している間（ドラッグ中）に、カーソルの位置へ円を表示します。左クリックは塗りつぶし、右クリックは二重リングで区別されます。",
+                       "Shows a circle at the cursor when you click and while a button is held (dragging). Left click is filled; right click is a double ring."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Toggle(L("大きいマウスカーソル", "Large mouse pointer"), isOn: $settings.bigCursor)
                 ColorPicker(L("カーソルの色", "Pointer Color"), selection: settings.colorBinding(\.bigCursorColorHex))
                     .disabled(!settings.bigCursor)
@@ -184,16 +189,8 @@ struct SettingsView: View {
                 Toggle(L("修飾キー + クリックをキー表示に出す", "Show modifier + click in the key display"), isOn: $settings.showClickInKeyDisplay)
                 Toggle(L("押しっぱなしの文字キー + クリックも出す", "Include held letter keys with clicks"), isOn: $settings.showKeyClickCombo)
                     .disabled(!settings.showClickInKeyDisplay)
-                Text(L("A を押しながらクリックするような操作を「A + カーソルマーク」と表示します。押しっぱなしにしている文字キーだけが対象なので、通常のタイピング中のクリックには反応しません。",
-                       "Shows operations like holding A while clicking as \"A + cursor mark\". Only letter keys you are holding down count, so clicking while typing normally is unaffected."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(L("⌘ や ⇧ などを押しながらクリックすると、キー表示に「⌘ + カーソルマーク」のような行が表示されます。押している間は表示され続けます。",
-                       "Clicking while holding ⌘, ⇧, etc. shows a row like \"⌘ + cursor mark\" in the key display. It stays visible while the button is held."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(L("クリックした瞬間と、ボタンを押している間（ドラッグ中）にカーソルの位置へ円を表示します。左クリックは塗りつぶし、右クリックは二重リングで区別されます。修飾キーとの組み合わせは、キー表示（⌘ など）と合わせて確認できます。",
-                       "Shows a circle at the cursor on click and while a button is held (dragging). Left click is filled; right click is a double ring. Combine with the key display (⌘ etc.) to show modifier-click combinations."))
+                Text(L("⌘ や ⇧ などを押しながらクリックすると、キー表示に「⌘ + カーソルマーク」の行が出て、押している間は表示され続けます。下をオンにすると、A などの文字キーを押しっぱなしにしたままのクリックも同じように表示します（通常のタイピング中のクリックには反応しません）。",
+                       "Clicking while holding ⌘, ⇧, etc. adds a row like \"⌘ + cursor mark\" to the key display, and it stays while the button is held. Turn on the second option to do the same for letter keys you are holding down (clicking while typing normally is unaffected)."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
