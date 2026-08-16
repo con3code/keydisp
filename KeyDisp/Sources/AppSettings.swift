@@ -82,6 +82,10 @@ final class AppSettings: ObservableObject {
     @Published var countRepeats: Bool { didSet { d.set(countRepeats, forKey: "countRepeats") } }
     /// 修飾キーを 1 つ離すたびに、その時点の組み合わせを履歴として残す
     @Published var stepModifierRelease: Bool { didSet { d.set(stepModifierRelease, forKey: "stepModifierRelease") } }
+    /// 一部を離した後、この時間だけ押し続けたら「意図して押している」とみなす（秒）
+    @Published var holdJudgeDelay: Double { didSet { d.set(holdJudgeDelay, forKey: "holdJudgeDelay") } }
+    /// 画面上端にカーソルを置いている間は履歴を消さない（フェードを止める）
+    @Published var topEdgeFreeze: Bool { didSet { d.set(topEdgeFreeze, forKey: "topEdgeFreeze") } }
 
     // MARK: デザイン
     @Published var style: KeyStyle { didSet { d.set(style.rawValue, forKey: "keyStyle") } }
@@ -104,6 +108,8 @@ final class AppSettings: ObservableObject {
     @Published var kanaDisplay: Bool { didSet { d.set(kanaDisplay, forKey: "kanaDisplay") } }
     /// 入力切替キー（英数/かな・ABC/あいう）に地球儀マークを付ける
     @Published var globeOnImeKeys: Bool { didSet { d.set(globeOnImeKeys, forKey: "globeOnImeKeys") } }
+    /// 修飾キーを押した順に表示する（オフなら ⌃⌥⇧⌘ の標準的な並び）
+    @Published var modifierPressOrder: Bool { didSet { d.set(modifierPressOrder, forKey: "modifierPressOrder") } }
 
     // MARK: マウス
     /// クリック / ドラッグ中にカーソル位置へ円形ハイライトを表示する
@@ -147,6 +153,8 @@ final class AppSettings: ObservableObject {
         showAllKeys = d.object(forKey: "showAllKeys") as? Bool ?? false
         countRepeats = d.object(forKey: "countRepeats") as? Bool ?? true
         stepModifierRelease = d.object(forKey: "stepModifierRelease") as? Bool ?? false
+        holdJudgeDelay = d.object(forKey: "holdJudgeDelay") as? Double ?? 0.5
+        topEdgeFreeze = d.object(forKey: "topEdgeFreeze") as? Bool ?? false
         style = KeyStyle(rawValue: d.object(forKey: "keyStyle") as? Int ?? 1) ?? .keycap
         textColorHex = d.object(forKey: "textColorHex") as? String ?? "#FFFFFF"
         keyColorHex = d.object(forKey: "keyColorHex") as? String ?? "#1C1C22"
@@ -159,6 +167,7 @@ final class AppSettings: ObservableObject {
         distinguishCase = d.object(forKey: "distinguishCase") as? Bool ?? false
         kanaDisplay = d.object(forKey: "kanaDisplay") as? Bool ?? false
         globeOnImeKeys = d.object(forKey: "globeOnImeKeys") as? Bool ?? true
+        modifierPressOrder = d.object(forKey: "modifierPressOrder") as? Bool ?? false
         mouseHighlight = d.object(forKey: "mouseHighlight") as? Bool ?? false
         mouseColorHex = d.object(forKey: "mouseColorHex") as? String ?? "#FFB300"
         mouseHighlightSize = d.object(forKey: "mouseHighlightSize") as? Double ?? 56

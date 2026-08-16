@@ -21,9 +21,11 @@ final class KeyCaptureController {
     private var modifierPeak: CGEventFlags = []
     /// 修飾キーが減ったときの処理を、押し続けるか確かめるまで保留しておくもの
     private var modifierShrinkWork: DispatchWorkItem?
+    /// 修飾キーを押した順（押下順表示オプション用）
+    private var modifierPressOrder: [CGEventFlags] = []
     /// この時間だけ押し続けたら「意図して押している」とみなす。
-    /// これより早く離した場合は 1 回の操作の一部として扱う。
-    private let deliberateHoldDelay: TimeInterval = 0.5
+    /// これより早く離した場合は 1 回の操作の一部として扱う（設定で変更可）。
+    private var deliberateHoldDelay: TimeInterval { settings.holdJudgeDelay }
     /// コンボのキーを離した後、修飾キーだけが残っている間は
     /// 修飾キー単独行を出さないためのフラグ
     private var suppressModifierEntry = false
@@ -36,7 +38,8 @@ final class KeyCaptureController {
     private var lastTypingID: UUID?
     private var lastTypingTime: TimeInterval = 0
     private let typingAppendWindow: TimeInterval = 1.2
-    private let maxTypingTokens = 16
+    /// 連結の上限（実質無制限。暴走を防ぐための安全弁）
+    private let maxTypingTokens = 400
 
     private(set) var isRunning = false
 
@@ -119,6 +122,7 @@ final class KeyCaptureController {
         currentIsModifierOnly = false
         currentModifiers = []
         modifierPeak = []
+        modifierPressOrder = []
         cancelModifierShrink()
         suppressModifierEntry = false
         lastTypingID = nil
@@ -137,7 +141,7 @@ final class KeyCaptureController {
     /// いま実際に押されているキーだけでトークン列を作る。
     /// 修飾キーも、英数・かな・Tab のような通常のキーも同じように扱う。
     private func heldTokens() -> [String] {
-        var tokens = KeyFormatter.modifierTokens(currentModifiers)
+        var tokens = KeyFormatter.modifierTokens(currentModifiers, pressOrder: modifierPressOrder)
         for code in pressedKeys.sorted() where !KeyFormatter.modifierKeyCodes.contains(code) {
             tokens.append(KeyFormatter.keyLabel(code, shifted: false))
         }
@@ -303,10 +307,17 @@ final class KeyCaptureController {
         currentModifiers = held
         let shiftOnly = flags == .maskShift
         let isChar = KeyFormatter.isCharacterKey(code)
-        // 修飾キーなし、または Shift のみの文字キーは「タイピング」として扱う
-        let isTypingKey = isChar && (flags.isEmpty || shiftOnly)
-
         let now = ProcessInfo.processInfo.systemUptime
+
+        // 文章を打っている途中のスペースは、区切らずタイピングの一部として扱う。
+        // 単独で押した場合（連結が切れているとき）は従来どおり特殊キーとして表示する。
+        let typingIsLive = lastTypingID.map { id in
+            now - lastTypingTime < typingAppendWindow && model.phase(of: id) != nil
+        } ?? false
+        let spaceInTyping = code == 49 && (flags.isEmpty || shiftOnly) && typingIsLive
+
+        // 修飾キーなし、または Shift のみの文字キーは「タイピング」として扱う
+        let isTypingKey = (isChar || spaceInTyping) && (flags.isEmpty || shiftOnly)
 
         if isTypingKey {
             // 連打カウント付きの修飾キー行（⇧ ×n など）があれば、この押下はタイピングの
@@ -361,7 +372,7 @@ final class KeyCaptureController {
             lastTypingTime = now
         } else {
             // コンボ（修飾キー付き、または特殊キー単独）
-            let tokens = KeyFormatter.modifierTokens(flags, keyCode: code) + [KeyFormatter.keyLabel(code, shifted: false)]
+            let tokens = KeyFormatter.modifierTokens(flags, keyCode: code, pressOrder: modifierPressOrder) + [KeyFormatter.keyLabel(code, shifted: false)]
             lastTypingID = nil
             model.releaseOtherTypingRows()
             if let id = currentID, currentIsModifierOnly {
@@ -435,7 +446,7 @@ final class KeyCaptureController {
             currentModifiers = flags
             // 修飾キーとの組み合わせのみ表示（単独クリックはマウスハイライトが担当）
             guard !flags.isEmpty else { return }
-            let tokens = KeyFormatter.modifierTokens(flags) + [KeyFormatter.clickToken(button: button)]
+            let tokens = KeyFormatter.modifierTokens(flags, pressOrder: modifierPressOrder) + [KeyFormatter.clickToken(button: button)]
             lastTypingID = nil
             if let id = currentID, currentIsModifierOnly {
                 if let target = mergeTargetID(for: tokens, ignoring: id) {
@@ -496,6 +507,11 @@ final class KeyCaptureController {
     private func handleFlagsChanged(_ event: CGEvent) {
         let code = CGKeyCode(truncatingIfNeeded: event.getIntegerValueField(.keyboardEventKeycode))
         let flags = KeyFormatter.relevantFlags(event.flags)
+        // 押した順を記録する（押下順表示オプション用）
+        for (flag, _) in KeyFormatter.modifierDisplayOrder
+        where flags.contains(flag) && !currentModifiers.contains(flag) {
+            modifierPressOrder.append(flag)
+        }
         currentModifiers = flags
         // 修飾キーの状態が動いたので、保留していた処理はいったん取り消す
         // （必要ならこの後 armRowNarrow で組み直す）
@@ -519,6 +535,7 @@ final class KeyCaptureController {
         if flags.isEmpty {
             suppressModifierEntry = false
             modifierPeak = []
+            modifierPressOrder = []
             if let id = currentID {
                 if pressedKeys.contains(where: { !KeyFormatter.modifierKeyCodes.contains($0) }) {
                     // 英数・かななど通常のキーがまだ押されている。
@@ -541,7 +558,7 @@ final class KeyCaptureController {
                     model.decrement(id: id)
                     model.release(id: id)
                     modifierPeak = flags
-                    currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags), isTyping: false)
+                    currentID = model.begin(tokens: KeyFormatter.modifierTokens(flags, pressOrder: modifierPressOrder), isTyping: false)
                 } else if !flags.isSuperset(of: modifierPeak) {
                     // 修飾キーが減った。離しきる途中の一瞬で表示を変えないよう、
                     // 残りを押し続けたときだけ反映する（armRowNarrow を参照）
@@ -550,7 +567,7 @@ final class KeyCaptureController {
                     // 押し足した修飾キーは加えるが、離したぶんは消さない。
                     // 途中で片方を離しても「⇧⌘」のまま表示し続けるため。
                     modifierPeak.formUnion(flags)
-                    model.update(id: id, tokens: KeyFormatter.modifierTokens(modifierPeak), isTyping: false)
+                    model.update(id: id, tokens: KeyFormatter.modifierTokens(modifierPeak, pressOrder: modifierPressOrder), isTyping: false)
                 }
             } else if currentID == nil, !suppressModifierEntry {
                 // タイピングの連結が生きている間の Shift 単独押下は、大文字や
@@ -563,7 +580,7 @@ final class KeyCaptureController {
                    model.phase(of: tid) != nil {
                     return
                 }
-                let tokens = KeyFormatter.modifierTokens(flags)
+                let tokens = KeyFormatter.modifierTokens(flags, pressOrder: modifierPressOrder)
                 if let target = mergeTargetID(for: tokens) {
                     // 同じ修飾キーの連続押し（⌘ 連打など）: 既存行を ×n に
                     model.increment(id: target)

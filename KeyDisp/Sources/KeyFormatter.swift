@@ -89,18 +89,40 @@ enum KeyFormatter {
         }
     }
 
-    /// 修飾キーの記号列（macOS の標準的な表記順: ⌃⌥⇧⌘）
-    static func modifierTokens(_ flags: CGEventFlags, keyCode: CGKeyCode? = nil) -> [String] {
-        var tokens: [String] = []
-        if flags.contains(.maskSecondaryFn) {
-            if keyCode == nil || !implicitFnKeys.contains(keyCode!) {
-                tokens.append("fn")
+    /// 表示順の基準となる修飾キーの並び（macOS の標準的な表記順: fn ⌃⌥⇧⌘）
+    static let modifierDisplayOrder: [(CGEventFlags, String)] = [
+        (.maskSecondaryFn, "fn"),
+        (.maskControl, "⌃"),
+        (.maskAlternate, "⌥"),
+        (.maskShift, "⇧"),
+        (.maskCommand, "⌘"),
+    ]
+
+    /// 修飾キーの記号列。
+    /// - Parameter pressOrder: 押された順（設定がオンのときだけ渡す）。
+    ///   ここに無いものは標準の並びで後ろに付ける。
+    static func modifierTokens(
+        _ flags: CGEventFlags, keyCode: CGKeyCode? = nil, pressOrder: [CGEventFlags]? = nil
+    ) -> [String] {
+        var order = modifierDisplayOrder
+        if let pressOrder, AppSettings.shared.modifierPressOrder {
+            var sorted: [(CGEventFlags, String)] = []
+            for f in pressOrder {
+                if let item = modifierDisplayOrder.first(where: { $0.0 == f }),
+                   !sorted.contains(where: { $0.0 == f }) {
+                    sorted.append(item)
+                }
             }
+            sorted += modifierDisplayOrder.filter { item in !sorted.contains { $0.0 == item.0 } }
+            order = sorted
         }
-        if flags.contains(.maskControl) { tokens.append("⌃") }
-        if flags.contains(.maskAlternate) { tokens.append("⌥") }
-        if flags.contains(.maskShift) { tokens.append("⇧") }
-        if flags.contains(.maskCommand) { tokens.append("⌘") }
+
+        var tokens: [String] = []
+        for (flag, symbol) in order where flags.contains(flag) {
+            if flag == .maskSecondaryFn,
+               let keyCode, implicitFnKeys.contains(keyCode) { continue }
+            tokens.append(symbol)
+        }
         // Windows 表記では ⌃ と ⌘ がどちらも Ctrl になるため、重複を除く
         let mapped = tokens.map(localized)
         var seen = Set<String>()

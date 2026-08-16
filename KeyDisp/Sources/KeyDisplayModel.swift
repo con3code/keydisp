@@ -56,12 +56,39 @@ final class KeyDisplayModel: ObservableObject {
         return true
     }
 
+    /// 履歴を消さずに保持する（画面上端にカーソルを置いている間など）
+    private(set) var isFrozen = false
+
+    func setFrozen(_ frozen: Bool) {
+        guard frozen != isFrozen else { return }
+        isFrozen = frozen
+        if frozen {
+            // 進行中の消去予定をすべて取り消し、消えかけの行は見える状態へ戻す
+            for id in pendingWork.keys { cancelWork(for: id) }
+            for idx in entries.indices where entries[idx].phase == .fading {
+                entries[idx].phase = .holding
+            }
+        } else {
+            // 解除時に、離されている行のフェードを改めて予約する
+            for entry in entries where entry.phase != .active {
+                scheduleFade(id: entry.id)
+            }
+        }
+    }
+
     /// キーを離した: 保持時間ののちフェードアウトさせる
     func release(id: UUID) {
         guard let idx = entries.firstIndex(where: { $0.id == id }),
               entries[idx].phase == .active else { return }
         cancelWork(for: id)
         entries[idx].phase = .holding
+        scheduleFade(id: id)
+    }
+
+    /// 保持時間ののちフェードして消す予定を立てる
+    private func scheduleFade(id: UUID) {
+        guard !isFrozen else { return }
+        cancelWork(for: id)
 
         let fade = DispatchWorkItem { [weak self] in
             guard let self, let i = self.entries.firstIndex(where: { $0.id == id }) else { return }

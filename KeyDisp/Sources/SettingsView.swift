@@ -23,8 +23,8 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Toggle(L("修飾キーを離すたびに履歴を残す", "Keep a row each time a modifier is released"), isOn: $settings.stepModifierRelease)
-                Text(L("修飾キーの一部を離して残りを 0.5 秒以上押し続けたときの動きが変わります。オンなら、そこまでの組み合わせを履歴として残し、押している組み合わせを新しい行に出します（⇧⌘ → ⇧）。オフなら行を増やさず、その行が押している組み合わせだけの表示に変わります。どちらも 0.5 秒より早く離しきった場合は、押した組み合わせ全体が 1 行として残ります。",
-                       "Changes what happens when you release part of a combination and hold the rest for more than 0.5 seconds. On: the combination so far stays as history and the keys still held start a new row (⇧⌘ → ⇧). Off: no row is added — the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination as one row."))
+                Text(L("修飾キーの一部を離して残りを「区切りの判定時間」以上押し続けたときの動きが変わります。オンなら、そこまでの組み合わせを履歴として残し、押している組み合わせを新しい行に出します（⇧⌘ → ⇧）。オフなら行を増やさず、その行が押している組み合わせだけの表示に変わります。どちらもそれより早く離しきった場合は、押した組み合わせ全体が 1 行として残ります。",
+                       "Changes what happens when you release part of a combination and hold the rest for longer than the hold threshold. On: the combination so far stays as history and the keys still held start a new row (⇧⌘ → ⇧). Off: no row is added — the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination as one row."))
                     .font(.caption)
                     .foregroundColor(.secondary)
                 sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
@@ -40,6 +40,21 @@ struct SettingsView: View {
                        "Move and resize the display area by dragging it in \"Edit Display Mode\" from the menu bar."))
                     .font(.caption)
                     .foregroundColor(.secondary)
+                sliderRow(L("区切りの判定時間", "Hold Threshold"), value: $settings.holdJudgeDelay,
+                          in: 0.2...2.0, format: L("%.1f 秒", "%.1f s"))
+                Text(L("修飾キーの一部を離したあと「押し続けている」と判断するまでの時間です。上の 2 つの設定で使われます。",
+                       "How long the remaining keys must stay down to count as deliberately held. Used by the two settings above."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("画面の上端にカーソルを置いている間は履歴を消さない",
+                         "Keep history while the cursor is at the top edge of the screen"),
+                       isOn: $settings.topEdgeFreeze)
+                Text(L("カーソルを画面の上端へ持っていくと、その間はフェードアウトが止まり、表示中の履歴がそのまま残ります。離すと通常どおり消えていきます。",
+                       "Park the cursor at the top edge to pause the fade-out and keep the rows on screen. Move away and they resume fading."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Toggle(L("画面の下端にカーソルを置いている間はキー表示を隠す",
                          "Hide key display while the cursor is at the bottom edge of the screen"),
                        isOn: $settings.hotCornerHide)
@@ -105,6 +120,12 @@ struct SettingsView: View {
                 Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
                 Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
                        "When off, letters are always shown uppercase. When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). Combinations (⌘A etc.) always use uppercase."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("修飾キーを押した順に表示", "Show modifiers in the order pressed"), isOn: $settings.modifierPressOrder)
+                Text(L("オフのときは説明書などで使われる標準的な並び（⌃ ⌥ ⇧ ⌘）で表示します。オンにすると実際に押した順で並ぶので、操作の手順を見せたいときに使えます。",
+                       "When off, modifiers appear in the conventional order used in documentation (⌃ ⌥ ⇧ ⌘). When on, they appear in the order you actually pressed them — useful for showing the sequence of an operation."))
                     .font(.caption)
                     .foregroundColor(.secondary)
 

@@ -93,6 +93,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func tickHotCorner() {
+        // 画面上端にカーソルがある間は履歴を消さずに保持する
+        model.setFrozen(settings.topEdgeFreeze && Self.isMouseAtScreenTop())
+
         guard settings.hotCornerHide, settings.overlayVisible, !settings.editMode else {
             if hiddenByHotCorner {
                 hiddenByHotCorner = false
@@ -114,6 +117,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 overlay.show()
             }
         }
+    }
+
+    /// カーソルがいずれかの画面の上端（threshold px 以内）にあるか
+    private static func isMouseAtScreenTop(threshold: CGFloat = 10) -> Bool {
+        let loc = NSEvent.mouseLocation
+        for screen in NSScreen.screens {
+            let f = screen.frame
+            guard loc.x >= f.minX - 1, loc.x <= f.maxX + 1,
+                  loc.y >= f.minY - 1, loc.y <= f.maxY + 1 else { continue }
+            if loc.y >= f.maxY - threshold { return true }
+        }
+        return false
     }
 
     /// カーソルがいずれかの画面の底辺（下端から threshold px 以内）にあるか
