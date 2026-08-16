@@ -32,7 +32,9 @@ fi
 
 IDENTITY="${CODESIGN_IDENTITY:--}"
 echo "==> Code signing (identity: ${IDENTITY})"
-codesign --force --deep --options runtime --timestamp --sign "$IDENTITY" "$APP"
+# --entitlements を付けないと再署名でサンドボックス等の entitlements が剥がれる
+codesign --force --deep --options runtime --timestamp \
+  --entitlements KeyDisp/KeyDisp.entitlements --sign "$IDENTITY" "$APP"
 codesign --verify --deep "$APP"
 
 mkdir -p dist
