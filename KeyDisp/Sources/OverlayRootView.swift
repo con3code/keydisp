@@ -25,11 +25,66 @@ enum OverlayMetrics {
         return rows * rowHeight(settings) + (rows - 1) * rowSpacing(settings) + padding
     }
 
-    /// 指定した高さに収まる行数
-    static func rowsThatFit(height: CGFloat, settings: AppSettings) -> Int {
-        let h = rowHeight(settings), s = rowSpacing(settings)
-        guard h > 0 else { return 1 }
-        return max(1, Int((height - padding + s) / (h + s)))
+    /// トークン 1 個ぶんの幅の目安（折り返し位置の計算用）
+    static func tokenWidth(_ settings: AppSettings) -> CGFloat {
+        let scale = CGFloat(settings.displayScale)
+        switch settings.style {
+        case .keycap:               return 57 * scale  // 最小幅 + 左右余白 + 間隔
+        case .simple, .customImage: return 22 * scale  // 文字 1 つぶん
+        }
+    }
+
+    /// 折り返して増えた 1 行ぶんの高さ
+    static func extraLineHeight(_ settings: AppSettings) -> CGFloat {
+        let scale = CGFloat(settings.displayScale)
+        switch settings.style {
+        case .keycap:               return 55 * scale
+        case .simple, .customImage: return 41 * scale
+        }
+    }
+
+    /// トークン数と幅から、折り返して何行になるかを見積もる
+    static func wrappedLines(tokenCount: Int, width: CGFloat, settings: AppSettings) -> Int {
+        let perLine = max(1, Int(width / tokenWidth(settings)))
+        return max(1, Int(ceil(Double(tokenCount) / Double(perLine))))
+    }
+
+    /// 1 行が折り返しも含めて占める高さ
+    static func height(of entry: KeyEntry, width: CGFloat, settings: AppSettings) -> CGFloat {
+        let lines = wrappedLines(tokenCount: entry.tokens.count, width: width, settings: settings)
+        return rowHeight(settings) + CGFloat(lines - 1) * extraLineHeight(settings)
+    }
+
+    /// 表示領域に収まる行だけを返す（新しい方を優先し、古い行から落とす）。
+    /// いちばん新しい行だけで収まらない場合は、その行の古い文字を落として収める。
+    static func visibleRows(_ entries: [KeyEntry], size: CGSize, settings: AppSettings) -> [KeyEntry] {
+        guard !entries.isEmpty else { return [] }
+        let availH = max(1, size.height - padding)
+        let availW = max(1, size.width - padding)
+        var result: [KeyEntry] = []
+        var used: CGFloat = 0
+
+        for entry in entries.reversed() {
+            let h = height(of: entry, width: availW, settings: settings)
+            let need = result.isEmpty ? h : h + rowSpacing(settings)
+            if used + need > availH {
+                if result.isEmpty {
+                    // 1 行だけでも収まらない: 新しい文字を残して先頭を削る
+                    var trimmed = entry
+                    let maxLines = max(1, Int((availH - rowHeight(settings)) / extraLineHeight(settings)) + 1)
+                    let perLine = max(1, Int(availW / tokenWidth(settings)))
+                    let keep = max(1, maxLines * perLine)
+                    if trimmed.tokens.count > keep {
+                        trimmed.tokens = Array(trimmed.tokens.suffix(keep))
+                    }
+                    result.append(trimmed)
+                }
+                break
+            }
+            used += need
+            result.insert(entry, at: 0)
+        }
+        return result
     }
 }
 
@@ -64,8 +119,7 @@ struct OverlayRootView: View {
             let rowMaxWidth = max(60, geo.size.width - 32)
             // 表示領域に収まらない行は描画しない。収まらないまま描くと、
             // いちばん見せたい新しい行が切れてしまうため、古い行から落とす
-            let fit = OverlayMetrics.rowsThatFit(height: geo.size.height, settings: settings)
-            let shown = Array(displayEntries.suffix(fit))
+            let shown = OverlayMetrics.visibleRows(displayEntries, size: geo.size, settings: settings)
             ZStack(alignment: .topLeading) {
                 if settings.editMode {
                     RoundedRectangle(cornerRadius: 12)
@@ -166,11 +220,15 @@ struct KeyEntryRow: View {
     /// コンビネーション表示のみ「+」区切りを入れる（タイピングの連結には入れない）
     private var showPlus: Bool { settings.plusSeparator && !entry.isTyping }
 
-    /// トークン列を Text として連結する（クリックトークンはカーソル画像に置き換え）
+    /// トークン列を Text として連結する（クリックトークンはカーソル画像に置き換え）。
+    /// トークンの境目にゼロ幅スペースを挟み、幅を超えたらそこで折り返せるようにする
+    /// （長い連続入力は 1 語とみなされ、そのままでは折り返せず切り捨てられるため）
     private var displayText: Text {
         var result = Text("")
         for (i, token) in entry.tokens.enumerated() {
-            if i > 0 && showPlus { result = result + Text("+") }
+            if i > 0 {
+                result = result + Text(showPlus ? "+\u{200B}" : "\u{200B}")
+            }
             if let symbol = KeyFormatter.clickSymbolName(for: token) {
                 result = result + Text(Image(systemName: symbol))
             } else if settings.globeOnImeKeys, KeyFormatter.isImeSwitchToken(token) {
@@ -212,6 +270,7 @@ struct KeyEntryRow: View {
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(textColor)
                 .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14 * settings.displayScale)
                 .padding(.vertical, 7 * settings.displayScale)
                 .background(
@@ -245,6 +304,7 @@ struct KeyEntryRow: View {
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(textColor)
                 .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 22 * settings.displayScale)
                 .padding(.vertical, 10 * settings.displayScale)
                 .background(customBackground)
