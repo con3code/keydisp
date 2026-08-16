@@ -209,7 +209,7 @@ your own.
 | Label Style | **Mac**: ⌘ ⌥ ↩ symbols / **Windows**: Ctrl, Alt, Enter… / **Mac + Windows**: combined like "⌘/Ctrl" |
 | Show 英数/かな as ABC/あいう | Matches the key legends on newer JIS keyboards |
 | Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
-| Show the symbol ⌥ produces | Shows what ⌥ plus a letter actually types, as in "⌥E → ´". Accent marks (dead keys) appear as the mark itself |
+| Show the symbol ⌥ produces | An ⌥ combination typed mid-sentence always joins the row as the symbol itself (Ω), regardless of this setting. Pressed on its own, it reads "⌥Z" with this off and "⌥Z → Ω" with it on. Accent marks (dead keys) appear as the mark itself |
 | Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
 | Add 🌐 to input-switch keys | Marks the 英数/かな (ABC/あいう) keys with a globe so they are not mistaken for typed letters |
 | Show kana input as hiragana (JIS kana layout) | **For kana-input users.** While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols. Leave off if you use romaji input |

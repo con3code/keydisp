@@ -363,8 +363,18 @@ final class KeyCaptureController {
         } ?? false
         let spaceInTyping = code == 49 && (flags.isEmpty || shiftOnly) && typingIsLive
 
+        // 文章を打っている途中の ⌥Z（Ω など）は、入力された記号そのものを文字として続ける。
+        // 打ち終わってから押した場合は、通常どおりコンビネーションとして表示する。
+        let optionOnly = flags == .maskAlternate || flags == [.maskAlternate, .maskShift]
+        let optionSymbol = (isChar && optionOnly)
+            ? KeyFormatter.optionSymbol(code, shifted: flags.contains(.maskShift))
+            : nil
+        let optionInTyping = typingIsLive && optionSymbol != nil
+
         // 修飾キーなし、または Shift のみの文字キーは「タイピング」として扱う
-        let isTypingKey = (isChar || spaceInTyping) && (flags.isEmpty || shiftOnly)
+        let isTypingKey = (flags.isEmpty || shiftOnly)
+            ? (isChar || spaceInTyping)
+            : optionInTyping
 
         if isTypingKey {
             // 連打カウント付きの修飾キー行（⇧ ×n など）があれば、この押下はタイピングの
@@ -376,10 +386,19 @@ final class KeyCaptureController {
                 currentID = nil
                 currentIsModifierOnly = false
             }
+            // ⌥ の記号を文章に続ける場合、直前に出した ⌥ 単独行は要らなくなるので消す
+            if optionInTyping, let id = currentID, currentIsModifierOnly {
+                model.remove(id: id)
+                currentID = nil
+                currentIsModifierOnly = false
+            }
             // 通常タイピングは「すべてのキー入力を表示」がオンのときだけ表示する
             guard settings.showAllKeys else { return }
             let token: String
-            if settings.kanaDisplay, KeyFormatter.isJapaneseInputMode(),
+            if optionInTyping, let symbol = optionSymbol {
+                // ⌥ で入力された記号そのものを文字として続ける（… Ω …）
+                token = symbol
+            } else if settings.kanaDisplay, KeyFormatter.isJapaneseInputMode(),
                let kana = KeyFormatter.kanaLabel(code, shifted: shiftOnly) {
                 // かな入力モード: JIS かな配列のひらがな・記号で表示
                 token = kana
@@ -674,7 +693,11 @@ final class KeyCaptureController {
                     currentID = model.begin(tokens: tokens, isTyping: false)
                 }
                 currentIsModifierOnly = true
-                lastTypingID = nil
+                // ⌥ と ⇧ は記号や大文字を打つのに使うので、タイピングの連結は切らない
+                // （⌥Z で Ω を続けて打てるように）
+                if !flags.subtracting([.maskAlternate, .maskShift]).isEmpty {
+                    lastTypingID = nil
+                }
             } else if let id = currentID, !currentIsModifierOnly, entryCount(id) == 1 {
                 // 通常のキーを押したままで修飾キーの構成が変わった。
                 // 押し続けるなら、いま押しているキーだけの表示に整える
