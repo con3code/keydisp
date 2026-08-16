@@ -87,9 +87,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - ホットエッジ（画面の下端にカーソルがある間はキー表示を隠す）
 
     private func startHotCornerWatch() {
-        hotCornerTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
-            self?.tickHotCorner()
+        // 上端フリーズ・下端非表示のどちらもオフの間は、タイマー自体を止めておく
+        Publishers.CombineLatest(
+            settings.$topEdgeFreeze.removeDuplicates(),
+            settings.$hotCornerHide.removeDuplicates()
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] top, bottom in
+            guard let self else { return }
+            if top || bottom {
+                guard self.hotCornerTimer == nil else { return }
+                self.hotCornerTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
+                    self?.tickHotCorner()
+                }
+            } else {
+                self.hotCornerTimer?.invalidate()
+                self.hotCornerTimer = nil
+                // 隠れたまま・凍結のままにならないよう、最後に 1 回だけ走らせる
+                self.tickHotCorner()
+            }
         }
+        .store(in: &cancellables)
     }
 
     private func tickHotCorner() {
@@ -146,8 +164,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 権限が後から許可された場合（設定画面やシステム設定から直接変更した場合も含めて）、
     /// 自動的にキャプチャを開始する
     private func startPermissionWatch() {
+        guard permissionWatchTimer == nil else { return }
         permissionWatchTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            guard let self, !self.capture.isRunning, Permissions.allGranted else { return }
+            guard let self else { return }
+            if self.capture.isRunning {
+                // 起動できたら監視は不要。止まったときは showPermissionGuide 経由で再開される
+                self.permissionWatchTimer?.invalidate()
+                self.permissionWatchTimer = nil
+                return
+            }
+            guard Permissions.allGranted else { return }
             self.startCapture()
             if self.capture.isRunning, self.settings.overlayVisible {
                 self.overlay.show()
@@ -404,6 +430,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 権限が足りないときのガイド。初回起動時と、キー監視を開始できなかったときに出る。
     /// 許可されると自動的に閉じてキー表示が始まる。
     private func showPermissionGuide() {
+        // 権限が許可され次第キャプチャを自動開始できるよう、監視を再開する
+        startPermissionWatch()
         if guideWindow == nil {
             let view = PermissionGuideView(
                 onCompleted: { [weak self] in

@@ -87,8 +87,10 @@ final class KeyCaptureController {
             (1 << CGEventType.otherMouseUp.rawValue) |
             (1 << CGEventType.leftMouseDragged.rawValue) |
             (1 << CGEventType.rightMouseDragged.rawValue) |
-            (1 << CGEventType.otherMouseDragged.rawValue) |
-            (1 << CGEventType.mouseMoved.rawValue)
+            (1 << CGEventType.otherMouseDragged.rawValue)
+        // .mouseMoved は購読しない。タップに含めるとマウスを動かすたびに
+        // このプロセスが起床してしまうため、必要とする側（大きいカーソル）が
+        // 機能オンの間だけ NSEvent のモニタで受ける。
 
         let callback: CGEventTapCallBack = { _, type, event, userInfo in
             if let userInfo {
@@ -343,9 +345,6 @@ final class KeyCaptureController {
 
         // マウスイベントはキー表示の表示/非表示とは独立して転送する
         switch type {
-        case .mouseMoved:
-            onMouseMoved?()
-            return
         case .leftMouseDown, .leftMouseUp,
              .rightMouseDown, .rightMouseUp,
              .otherMouseDown, .otherMouseUp,

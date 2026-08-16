@@ -13,6 +13,8 @@ final class BigCursorController {
     private let hosting: NSHostingView<BigCursorView>
     private var cancellables: Set<AnyCancellable> = []
     private var lastOrigin: NSPoint = .zero
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
 
     /// ポインタ画像の周囲に確保する余白の割合（輪郭線と影のぶん）
     private static let padRatio: CGFloat = 0.18
@@ -52,17 +54,40 @@ final class BigCursorController {
         .sink { [weak self] enabled, _, _ in
             guard let self else { return }
             if enabled {
+                self.installMouseMonitors()
                 self.resize()
                 self.follow()
                 self.panel.orderFrontRegardless()
             } else {
+                self.removeMouseMonitors()
                 self.panel.orderOut(nil)
             }
         }
         .store(in: &cancellables)
     }
 
-    /// マウスが動いたときに呼ぶ（イベントタップから転送される）
+    /// マウス移動の購読。機能がオンの間だけ登録する。
+    /// イベントタップで全マウス移動を受けると、機能オフでも移動のたびに
+    /// プロセスが起床してしまうため、こちらのモニタ方式にしている。
+    /// ドラッグ中の移動はタップの dragged イベントから mouseMoved() に転送される。
+    private func installMouseMonitors() {
+        guard globalMonitor == nil else { return }
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in
+            self?.mouseMoved()
+        }
+        // 自アプリのウィンドウ上（設定画面など）ではグローバルモニタに届かないため
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved) { [weak self] event in
+            self?.mouseMoved()
+            return event
+        }
+    }
+
+    private func removeMouseMonitors() {
+        if let m = globalMonitor { NSEvent.removeMonitor(m); globalMonitor = nil }
+        if let m = localMonitor { NSEvent.removeMonitor(m); localMonitor = nil }
+    }
+
+    /// マウスが動いたときに呼ぶ（モニタのほか、ドラッグ中はイベントタップから転送される）
     func mouseMoved() {
         guard settings.bigCursor else { return }
         if !panel.isVisible {

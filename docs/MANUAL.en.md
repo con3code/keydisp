@@ -167,7 +167,7 @@ Edit Display Mode from the menu again.
 
 ## 5. Settings Reference
 
-Open **Settings…** from the menu bar.
+Open **Settings…** from the menu bar. Settings are organized into tabs along the top; the headings below correspond to the tabs (Shortcut lives inside the General tab).
 
 ### Display
 

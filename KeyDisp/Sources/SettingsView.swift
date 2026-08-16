@@ -10,7 +10,34 @@ struct SettingsView: View {
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        Form {
+        TabView {
+            settingsTab(L("表示", "Display")) { displaySection }
+            settingsTab(L("キー表記", "Key Labels")) { keyLabelsSection }
+            settingsTab(L("デザイン", "Design")) { designSection }
+            settingsTab(L("マウス", "Mouse")) { mouseSection }
+            settingsTab(L("一般", "General")) {
+                shortcutSection
+                generalSection
+            }
+            settingsTab(L("権限", "Permissions")) { permissionsSection }
+        }
+        .frame(width: 520, height: 580)
+        .onReceive(timer) { _ in
+            accessibilityOK = Permissions.accessibilityGranted
+            inputMonitoringOK = Permissions.inputMonitoringGranted
+        }
+    }
+
+    /// タブ 1 枚ぶんの設定フォーム
+    private func settingsTab<Content: View>(
+        _ title: String, @ViewBuilder content: () -> Content
+    ) -> some View {
+        Form { content() }
+            .formStyle(.grouped)
+            .tabItem { Text(title) }
+    }
+
+    @ViewBuilder private var displaySection: some View {
             Section(L("表示", "Display")) {
                 Toggle(L("すべてのキー入力を表示", "Show all key input"), isOn: $settings.showAllKeys)
                 Text(L("オフのときは、修飾キー付きのコンビネーションと特殊キー（↩ ⇥ ⎋ 矢印など）だけを表示します。オンにすると通常のタイピング（英数字など）も表示されます。",
@@ -63,7 +90,9 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+    }
 
+    @ViewBuilder private var keyLabelsSection: some View {
             Section(L("キー表記", "Key Labels")) {
                 Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
                 Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
@@ -129,7 +158,9 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+    }
 
+    @ViewBuilder private var designSection: some View {
             Section(L("デザイン", "Design")) {
                 Picker(L("キーのスタイル", "Key Style"), selection: $settings.style) {
                     ForEach(KeyStyle.allCases) { s in
@@ -164,7 +195,9 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+    }
 
+    @ViewBuilder private var mouseSection: some View {
             Section(L("マウス", "Mouse")) {
                 Toggle(L("クリック / ドラッグをカーソル位置に表示", "Show clicks / drags at the cursor"), isOn: $settings.mouseHighlight)
                 ColorPicker(L("ハイライトの色", "Highlight Color"), selection: settings.colorBinding(\.mouseColorHex))
@@ -194,7 +227,9 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+    }
 
+    @ViewBuilder private var shortcutSection: some View {
             Section(L("ショートカット", "Shortcut")) {
                 HStack {
                     Text(L("表示 / 非表示の切替え", "Toggle Show / Hide"))
@@ -202,7 +237,9 @@ struct SettingsView: View {
                     ShortcutRecorderView(settings: settings)
                 }
             }
+    }
 
+    @ViewBuilder private var generalSection: some View {
             Section(L("一般", "General")) {
                 Picker(L("言語", "Language"), selection: $settings.language) {
                     ForEach(AppLanguage.allCases) { lang in
@@ -217,7 +254,9 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+    }
 
+    @ViewBuilder private var permissionsSection: some View {
             Section(L("権限", "Permissions")) {
                 permissionRow(L("アクセシビリティ", "Accessibility"), granted: accessibilityOK) {
                     // 再リクエストすることで、一覧から削除された場合でも
@@ -243,14 +282,8 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-        }
-        .formStyle(.grouped)
-        .frame(width: 480, height: 640)
-        .onReceive(timer) { _ in
-            accessibilityOK = Permissions.accessibilityGranted
-            inputMonitoringOK = Permissions.inputMonitoringGranted
-        }
     }
+
 
     private func sliderRow(
         _ label: String, value: Binding<Double>, in range: ClosedRange<Double>,
