@@ -132,6 +132,15 @@ enum KeyFormatter {
     /// 矢印キーのキーコード
     static let arrowKeyCodes: Set<CGKeyCode> = [123, 124, 125, 126]
 
+    /// 見た目の重心が高い記号の光学調整（フォントサイズに対する下げ幅の割合）。
+    /// ↩ ⌤ は字形が上に寄っているため、少し下げると他のキーと高さが揃って見える。
+    static func opticalBaselineDrop(_ token: String) -> CGFloat {
+        switch token {
+        case "↩", "⌤": return 0.08
+        default: return 0
+        }
+    }
+
     /// 「⌥E → ´」のように ⌥ で入力される記号を併記するときの矢印。
     /// これはキーではないので、キーキャップ表示ではキーの形にせず矢印だけを描く。
     /// 「→」キーのトークンと見分けるため、見た目の文字ではなく私用領域の符号を持たせる。

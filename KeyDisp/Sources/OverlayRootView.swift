@@ -354,7 +354,13 @@ struct KeyEntryRow: View {
             } else if settings.globeOnImeKeys, KeyFormatter.isImeSwitchToken(token) {
                 result = result + Text(Image(systemName: "globe")) + Text(token)
             } else {
-                result = result + Text(token)
+                let drop = KeyFormatter.opticalBaselineDrop(token)
+                if drop > 0 {
+                    // ↩ など上に寄って見える記号は、少し下げて他の字と高さを揃える
+                    result = result + Text(token).baselineOffset(-fontSize * drop)
+                } else {
+                    result = result + Text(token)
+                }
             }
         }
         if entry.count > 1 {
@@ -559,8 +565,11 @@ struct KeycapView: View {
             (Text(Image(systemName: "globe")) + Text(token))
                 .font(.system(size: fontSize, weight: .bold, design: .rounded))
         } else {
+            // ↩ など上に寄って見える記号は、キーキャップの中で少し下げて重心を揃える。
+            // baselineOffset だとキーキャップ自体の高さが変わるので、描画位置だけずらす
             Text(token)
                 .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                .offset(y: fontSize * KeyFormatter.opticalBaselineDrop(token))
         }
     }
 }
