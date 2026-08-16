@@ -11,10 +11,14 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     static let defaultSize = NSSize(width: 620, height: 440)
 
     let panel: NSPanel
+    private let model: KeyDisplayModel
     private let settings: AppSettings
     private var cancellables: Set<AnyCancellable> = []
+    /// 外側（メニュー・ホットエッジなど）から求められている表示状態
+    private var wantsVisible = false
 
     init(model: KeyDisplayModel, settings: AppSettings = .shared) {
+        self.model = model
         self.settings = settings
 
         panel = NSPanel(
@@ -58,6 +62,31 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         .receive(on: DispatchQueue.main)
         .sink { [weak self] _ in self?.growToFitContent() }
         .store(in: &cancellables)
+
+        // 行がすべて消えたら、透明なウィンドウを画面に載せたままにせず完全に下ろす
+        // （描画合成の対象から外れる）。新しい行が入ったら再び載せる
+        model.$entries
+            .map(\.isEmpty)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refreshVisibility() }
+            .store(in: &cancellables)
+        settings.$editMode
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refreshVisibility() }
+            .store(in: &cancellables)
+    }
+
+    /// 表示すべき内容があるときだけウィンドウを画面に載せる。
+    /// 編集モード中はサンプル行を見せるため、空でも必ず載せる
+    private func refreshVisibility() {
+        let shouldShow = settings.editMode || (wantsVisible && !model.entries.isEmpty)
+        if shouldShow {
+            if !panel.isVisible { panel.orderFrontRegardless() }
+        } else {
+            if panel.isVisible { panel.orderOut(nil) }
+        }
     }
 
     // MARK: - 表示内容に合わせた拡張
@@ -107,18 +136,18 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     }
 
     func show() {
-        panel.orderFrontRegardless()
+        wantsVisible = true
+        refreshVisibility()
     }
 
     func hide() {
+        wantsVisible = false
         panel.orderOut(nil)
     }
 
     func setEditMode(_ editing: Bool) {
         panel.ignoresMouseEvents = !editing
-        if editing {
-            panel.orderFrontRegardless()
-        }
+        refreshVisibility()
     }
 
     /// 位置とサイズをメインスクリーン左下のデフォルト状態へ戻す。
