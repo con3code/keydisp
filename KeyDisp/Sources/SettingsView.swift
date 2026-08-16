@@ -71,17 +71,6 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Picker(L("表記スタイル", "Label Style"), selection: $settings.osLabelStyle) {
-                    ForEach(OSLabelStyle.allCases) { s in
-                        Text(s.label).tag(s)
-                    }
-                }
-                .pickerStyle(.segmented)
-                Text(L("Windows 表記はショートカット互換の対応で表示します: ⌘/⌃ → Ctrl、⌥ → Alt、↩ → Enter、⌫ → BackSpace、英数 → 無変換、かな → 変換 など。併存表示では「⌘/Ctrl」のように両方を表示します。",
-                       "Windows labels use shortcut-equivalent mapping: ⌘/⌃ → Ctrl, ⌥ → Alt, ↩ → Enter, ⌫ → BackSpace, etc. Combined mode shows both, e.g. \"⌘/Ctrl\"."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
                 Picker(L("矢印キーのまとめ方", "Arrow Keys"), selection: $settings.arrowGrouping) {
                     ForEach(ArrowGrouping.allCases) { g in
                         Text(g.label).tag(g)
@@ -93,9 +82,26 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
+                Toggle(L("修飾キーを押した順に表示", "Show modifiers in the order pressed"), isOn: $settings.modifierPressOrder)
+                Text(L("オフのときは説明書などで使われる標準的な並び（⌃ ⌥ ⇧ ⌘）で表示します。オンにすると実際に押した順で並ぶので、操作の手順を見せたいときに使えます。",
+                       "When off, modifiers appear in the conventional order used in documentation (⌃ ⌥ ⇧ ⌘). When on, they appear in the order you actually pressed them — useful for showing the sequence of an operation."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Toggle(L("キーの間に「+」を表示", "Separate keys with \"+\""), isOn: $settings.plusSeparator)
                 Text(L("コンビネーションを Ctrl+Shift+S のように区切って表示します（タイピングの連続表示には付きません）。",
                        "Shows combinations like Ctrl+Shift+S (not applied to continuous typing)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Picker(L("表記スタイル", "Label Style"), selection: $settings.osLabelStyle) {
+                    ForEach(OSLabelStyle.allCases) { s in
+                        Text(s.label).tag(s)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(L("Windows 表記はショートカット互換の対応で表示します: ⌘/⌃ → Ctrl、⌥ → Alt、↩ → Enter、⌫ → BackSpace、英数 → 無変換、かな → 変換 など。併存表示では「⌘/Ctrl」のように両方を表示します。",
+                       "Windows labels use shortcut-equivalent mapping: ⌘/⌃ → Ctrl, ⌥ → Alt, ↩ → Enter, ⌫ → BackSpace, etc. Combined mode shows both, e.g. \"⌘/Ctrl\"."))
                     .font(.caption)
                     .foregroundColor(.secondary)
 
@@ -105,21 +111,15 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Toggle(L("修飾キーを押した順に表示", "Show modifiers in the order pressed"), isOn: $settings.modifierPressOrder)
-                Text(L("オフのときは説明書などで使われる標準的な並び（⌃ ⌥ ⇧ ⌘）で表示します。オンにすると実際に押した順で並ぶので、操作の手順を見せたいときに使えます。",
-                       "When off, modifiers appear in the conventional order used in documentation (⌃ ⌥ ⇧ ⌘). When on, they appear in the order you actually pressed them — useful for showing the sequence of an operation."))
+                Toggle(L("入力切替キーに 🌐 を付ける", "Add 🌐 to input-switch keys"), isOn: $settings.globeOnImeKeys)
+                Text(L("英数/かな（ABC/あいう）キーの表示に地球儀マークを付けて、通常の文字入力と区別しやすくします。キーボードに地球儀キーが別にあって紛らわしい場合はオフにしてください。",
+                       "Adds a globe mark to the 英数/かな (ABC/あいう) key display to distinguish them from ordinary typing. Turn off if it is confusing because your keyboard has a separate Globe key."))
                     .font(.caption)
                     .foregroundColor(.secondary)
 
                 Toggle(L("「英数/かな」を「ABC/あいう」と表示", "Show 英数/かな as ABC/あいう"), isOn: $settings.jisABCLabels)
                 Text(L("新しい JIS 配列キーボードの刻印（ABC / あいう）に合わせた表記です。",
                        "Matches the key legends (ABC / あいう) on newer JIS keyboards."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("入力切替キーに 🌐 を付ける", "Add 🌐 to input-switch keys"), isOn: $settings.globeOnImeKeys)
-                Text(L("英数/かな（ABC/あいう）キーの表示に地球儀マークを付けて、通常の文字入力と区別しやすくします。キーボードに地球儀キーが別にあって紛らわしい場合はオフにしてください。",
-                       "Adds a globe mark to the 英数/かな (ABC/あいう) key display to distinguish them from ordinary typing. Turn off if it is confusing because your keyboard has a separate Globe key."))
                     .font(.caption)
                     .foregroundColor(.secondary)
 
