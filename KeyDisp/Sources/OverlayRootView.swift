@@ -234,14 +234,23 @@ struct KeyEntryRow: View {
     /// コンビネーション表示のみ「+」区切りを入れる（タイピングの連結には入れない）
     private var showPlus: Bool { settings.plusSeparator && !entry.isTyping }
 
-    /// トークン列を Text として連結する（クリックトークンはカーソル画像に置き換え）。
-    /// トークンの境目にゼロ幅スペースを挟み、幅を超えたらそこで折り返せるようにする
+    /// キーの境目に挟む文字。
+    /// 「+」なしのコンビネーション表示は「⌘/Ctrl⇧/Shift」のように地続きに見えてしまうため、
+    /// 細いスペース (U+2009) を入れて区切りが分かるようにする。
+    /// タイピングの連結は 1 つの語として読ませたいので、区切りは入れない。
+    /// いずれの場合もゼロ幅スペース (U+200B) を添えて、幅を超えたらそこで折り返せるようにする
     /// （長い連続入力は 1 語とみなされ、そのままでは折り返せず切り捨てられるため）
+    private var tokenSeparator: String {
+        if showPlus { return "+\u{200B}" }
+        return entry.isTyping ? "\u{200B}" : "\u{2009}\u{200B}"
+    }
+
+    /// トークン列を Text として連結する（クリックトークンはカーソル画像に置き換え）
     private var displayText: Text {
         var result = Text("")
         for (i, token) in entry.tokens.enumerated() {
             if i > 0 {
-                result = result + Text(showPlus ? "+\u{200B}" : "\u{200B}")
+                result = result + Text(tokenSeparator)
             }
             if let symbol = KeyFormatter.clickSymbolName(for: token) {
                 result = result + Text(Image(systemName: symbol))
