@@ -44,8 +44,9 @@ targets:
         CURRENT_PROJECT_VERSION: 4
         SWIFT_VERSION: "5.0"
         ENABLE_HARDENED_RUNTIME: true
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: SSMZZ3ZVGE
+        CODE_SIGN_IDENTITY: "Developer ID Application: Kotatsu RIN (SSMZZ3ZVGE)"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: false
         DEAD_CODE_STRIPPING: true
