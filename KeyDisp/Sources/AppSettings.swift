@@ -163,6 +163,8 @@ final class AppSettings: ObservableObject {
 
     // MARK: 実行時のみ（永続化しない）
     @Published var editMode: Bool = false
+    /// オーバーレイの内側の幅。1 行に何文字入るかの判断に使う（0 なら未設定）
+    var overlayContentWidth: Double = 0
     /// メニューバーホットエッジによる一時非表示中（キー入力の処理も停止する）
     @Published var hotCornerSuppressed: Bool = false
 

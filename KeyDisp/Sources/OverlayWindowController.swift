@@ -47,6 +47,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         panel.contentView = hosting
 
         restoreFrame()
+        publishContentWidth()
 
         // 表示サイズ・行数を変えたときは、キー表示が切れないよう表示領域を広げる
         Publishers.CombineLatest3(
@@ -97,6 +98,11 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         }
         panel.setFrame(frame, display: true)
         saveFrame()
+    }
+
+    /// 1 行に入る文字数の判断に使うため、内側の幅を設定へ伝える
+    private func publishContentWidth() {
+        settings.overlayContentWidth = Double(panel.frame.width - OverlayMetrics.padding)
     }
 
     func show() {
@@ -158,6 +164,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     }
 
     func windowDidResize(_ notification: Notification) {
+        publishContentWidth()
         saveFrame()
     }
 }

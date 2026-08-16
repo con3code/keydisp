@@ -43,6 +43,11 @@ enum OverlayMetrics {
         }
     }
 
+    /// 1 行に収まるトークン（キー）の数
+    static func tokensPerLine(width: CGFloat, settings: AppSettings) -> Int {
+        max(1, Int(width / tokenWidth(settings)))
+    }
+
     /// トークン数と幅から、折り返して何行になるかを見積もる
     static func wrappedLines(tokenCount: Int, width: CGFloat, settings: AppSettings) -> Int {
         let perLine = max(1, Int(width / tokenWidth(settings)))

@@ -41,8 +41,16 @@ final class KeyCaptureController {
     private var lastTypingID: UUID?
     private var lastTypingTime: TimeInterval = 0
     private let typingAppendWindow: TimeInterval = 1.2
-    /// 連結の上限（実質無制限。暴走を防ぐための安全弁）
+    /// 連結の上限（暴走を防ぐための安全弁）
     private let maxTypingTokens = 400
+
+    /// タイピング 1 行に入る文字数。オーバーレイの幅から決める。
+    /// 端まで来たら折り返さず、新しい行を起こして先頭から続ける（タイプライター方式）。
+    private var typingTokensPerLine: Int {
+        let width = CGFloat(settings.overlayContentWidth)
+        guard width > 0 else { return maxTypingTokens }
+        return min(maxTypingTokens, OverlayMetrics.tokensPerLine(width: width, settings: settings))
+    }
 
     private(set) var isRunning = false
 
@@ -421,7 +429,7 @@ final class KeyCaptureController {
             if let id = lastTypingID,
                now - lastTypingTime < typingAppendWindow,
                model.phase(of: id) != nil,
-               (model.entries.first(where: { $0.id == id })?.tokens.count ?? maxTypingTokens) < maxTypingTokens,
+               (model.entries.first(where: { $0.id == id })?.tokens.count ?? typingTokensPerLine) < typingTokensPerLine,
                model.append(id: id, token: token) {
                 currentID = id
                 lastTypingTime = now
