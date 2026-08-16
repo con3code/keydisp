@@ -37,23 +37,20 @@ so they open without warnings.
 KeyDisp needs macOS permission to read keyboard input. A setup guide appears
 on first launch — follow its steps:
 
-1. **Accessibility** *(required)* — System Settings › Privacy & Security ›
-   Accessibility → enable KeyDisp
-2. **Input Monitoring** — System Settings › Privacy & Security › Input Monitoring →
-   enable KeyDisp if it is listed there
+1. **Input Monitoring** — System Settings › Privacy & Security › Input Monitoring →
+   enable KeyDisp
+2. If the Start button stays disabled after that, press **"Restart App"** in the
+   guide — the permission takes effect after a restart
 
-Once granted, the guide closes automatically and the key display starts.
+Once the permission is in effect, the guide closes automatically and the key
+display starts.
 
-> **It is fine if KeyDisp is not listed under Input Monitoring**
->
-> Accessibility is the permission that actually drives key capture, and macOS treats it
-> as covering Input Monitoring as well. On systems where Accessibility is granted, the
-> Input Monitoring list often never gets a KeyDisp entry at all (the app's settings
-> window still shows it as "Granted"). If keys appear on screen, everything is working.
-
-> **Tip:** if KeyDisp does not appear in the Accessibility list, press the
-> "Open Settings / Open System Settings" button in the guide or in the app's settings.
+> **Tip:** if KeyDisp does not appear in the Input Monitoring list, press the
+> "Open Settings" button in the guide or in the app's settings.
 > This re-requests the permission and adds KeyDisp back to the list (switched off).
+
+> **Updating from v1.0.x**: you will need to grant Input Monitoring anew, and
+> settings are reset because the app's internal identifier changed.
 
 ### What happens after launch
 
@@ -246,15 +243,12 @@ want to record (esc cancels). Combinations without a modifier key cannot be reco
 
 ### Permissions
 
-Shows the status of Accessibility and Input Monitoring.
+Shows the status of Input Monitoring.
 
 - **Open System Settings** — re-requests the permission and opens System Settings.
   Also re-adds KeyDisp to the list if it is missing
 - **Re-check** — verifies the permission state and restarts key capture.
-  Use this when permissions show as granted but keys are not displayed
-
-Note that Input Monitoring may show as "Granted" here while KeyDisp is not listed in
-System Settings at all. That is expected: the Accessibility permission covers it.
+  Use this when the permission shows as granted but keys are not displayed
 
 ---
 
@@ -280,19 +274,17 @@ System Settings at all. That is expected: the Accessibility permission covers it
 
 1. Check that the ⌨ icon is in the menu bar (if not, the app is not running)
 2. Check that "Show Keys" is checked in the menu
-3. Check Settings → Permissions: both should show "Granted"
+3. Check Settings → Permissions: Input Monitoring should show "Granted"
 4. If granted but still nothing, press **Re-check** in the Permissions section
    (this restarts key capture)
 5. If that does not help, remove KeyDisp from the lists in System Settings
    (− button), then press "Open System Settings" in the app to re-add it,
    and switch it on again
 
-### KeyDisp is not listed under Input Monitoring in System Settings
+### Turned Input Monitoring on, but nothing happens
 
-This is not a problem. Accessibility is the permission that drives key capture, and
-macOS treats it as covering Input Monitoring, so no entry is created in that list on
-many systems. As long as Accessibility is granted and keys appear on screen, you are
-all set.
+The permission does **not take effect until the app restarts**. Press
+"Restart App" in the setup guide, or quit KeyDisp and open it again.
 
 ### Not working after reinstalling
 

@@ -18,8 +18,8 @@ targets:
       properties:
         CFBundleDisplayName: KeyDisp
         CFBundleName: KeyDisp
-        CFBundleShortVersionString: "1.0.3"
-        CFBundleVersion: "4"
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "5"
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: true
         # Credits: con3code / Kotatsu Rin
@@ -40,8 +40,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.con3.KeyDisp
-        MARKETING_VERSION: 1.0.3
-        CURRENT_PROJECT_VERSION: 4
+        MARKETING_VERSION: 1.1.0
+        CURRENT_PROJECT_VERSION: 5
         SWIFT_VERSION: "5.0"
         ENABLE_HARDENED_RUNTIME: true
         CODE_SIGN_STYLE: Manual

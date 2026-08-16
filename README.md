@@ -53,19 +53,18 @@ For detailed usage instructions and a full settings reference, see the
 
 ### First launch — permissions
 
-KeyDisp reads keyboard input through macOS accessibility APIs. A setup guide appears
-on first launch:
+KeyDisp reads keyboard input with the macOS **Input Monitoring** permission.
+A setup guide appears on first launch:
 
-1. **System Settings › Privacy & Security › Accessibility** → enable KeyDisp *(required)*
-2. **System Settings › Privacy & Security › Input Monitoring** → enable KeyDisp if it
-   is listed there
+1. **System Settings › Privacy & Security › Input Monitoring** → enable KeyDisp
+2. If the Start button stays disabled after that, press **"Restart App"** in the
+   guide — the permission takes effect after a restart
 
-Accessibility is the permission that matters. Input Monitoring often does not list
-KeyDisp at all — macOS treats Accessibility as covering it — and that is perfectly
-normal. If keys are showing up on screen, everything is working.
+If KeyDisp is missing from the Input Monitoring list (e.g. after reinstalling), open
+**Settings → Permissions** in the app and press the button there to re-register it.
 
-If KeyDisp is missing from the Accessibility list (e.g. after reinstalling), open
-**Settings → Permissions** in the app and press the buttons there to re-register it.
+When updating from v1.0.x you will need to grant Input Monitoring anew, and settings
+are reset because the app's internal identifier changed.
 
 ## Requirements
 
@@ -89,11 +88,12 @@ To produce a distributable zip in `dist/`:
 ./scripts/release.sh
 ```
 
-## Why isn't this on the Mac App Store?
+## About the Mac App Store
 
-The App Store requires the App Sandbox, which prohibits the global event tap KeyDisp uses
-to observe keystrokes. This is a platform-level restriction that affects all keystroke
-visualizers, so KeyDisp is distributed directly instead.
+As of v1.1.0 KeyDisp runs inside the App Sandbox (key capture uses a listen-only
+event tap with the Input Monitoring permission), so it technically meets App Store
+requirements. An App Store release is in preparation; for now KeyDisp is
+distributed directly from GitHub.
 
 ## Privacy
 
