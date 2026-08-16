@@ -74,7 +74,6 @@ Click the ⌨ icon to open the menu:
 | Edit Display Mode | Adjust position, size, and design while watching a live preview |
 | Reset Position & Size | Returns the overlay to the bottom-left of the main screen at default size |
 | Settings… | Opens the settings window (⌘,) |
-| About KeyDisp | Version information |
 | Launch at Login | Starts KeyDisp automatically when you log in |
 | Show Dock Icon | Toggles the Dock icon |
 | Quit KeyDisp | Quits the app (⌘Q) |
@@ -167,7 +166,7 @@ Edit Display Mode from the menu again.
 
 ## 5. Settings Reference
 
-Open **Settings…** from the menu bar. Settings are organized into a sidebar on the left; the headings below correspond to the sidebar items (Shortcut lives inside General).
+Open **Settings…** from the menu bar. Settings are organized into a sidebar on the left; the headings below correspond to the sidebar items (Shortcut lives inside General). Version information lives under "About KeyDisp" in the sidebar.
 
 ### Display
 

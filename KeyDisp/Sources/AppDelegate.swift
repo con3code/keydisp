@@ -30,7 +30,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
-    private var aboutWindow: NSWindow?
     private var guideWindow: NSWindow?
 
     private var cancellables: Set<AnyCancellable> = []
@@ -277,7 +276,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func refreshWindowTitles() {
         settingsWindow?.title = L("KeyDisp 設定", "KeyDisp Settings")
-        aboutWindow?.title = L("KeyDisp について", "About KeyDisp")
         guideWindow?.title = L("KeyDisp の初期設定", "KeyDisp Setup")
         editHUD?.updateTitle()
     }
@@ -339,7 +337,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let settingsItem = NSMenuItem(title: L("設定…", "Settings…"), action: #selector(showSettingsAction), keyEquivalent: ",")
         menu.addItem(settingsItem)
-        menu.addItem(NSMenuItem(title: L("KeyDisp について", "About KeyDisp"), action: #selector(showAboutAction), keyEquivalent: ""))
         menu.addItem(.separator())
 
         let login = NSMenuItem(title: L("ログイン時に起動", "Launch at Login"), action: #selector(toggleLaunchAtLoginAction), keyEquivalent: "")
@@ -456,21 +453,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         guideWindow?.title = L("KeyDisp の初期設定", "KeyDisp Setup")
         guideWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-    }
-
-    @objc private func showAboutAction() {
-        if aboutWindow == nil {
-            let window = NSWindow(contentViewController: NSHostingController(rootView: AboutView()))
-            window.styleMask = [.titled, .closable]
-            window.isReleasedWhenClosed = false
-            // 仮想デスクトップを移動しても、開くときはいま見ているデスクトップに出す
-            window.collectionBehavior.insert(.moveToActiveSpace)
-            centerOnMouseScreen(window)
-            aboutWindow = window
-        }
-        aboutWindow?.title = L("KeyDisp について", "About KeyDisp")
-        aboutWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 

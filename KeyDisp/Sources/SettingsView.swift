@@ -5,7 +5,7 @@ import SwiftUI
 
 /// 設定画面のサイドバー項目
 enum SettingsPane: String, CaseIterable, Identifiable {
-    case display, keyLabels, design, mouse, general, permissions
+    case display, keyLabels, design, mouse, general, permissions, about
     var id: String { rawValue }
 
     var title: String {
@@ -16,6 +16,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .mouse:       return L("マウス", "Mouse")
         case .general:     return L("一般", "General")
         case .permissions: return L("権限", "Permissions")
+        case .about:       return L("KeyDisp について", "About KeyDisp")
         }
     }
 
@@ -27,6 +28,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .mouse:       return "computermouse.fill"
         case .general:     return "gearshape.fill"
         case .permissions: return "lock.shield.fill"
+        case .about:       return "info"
         }
     }
 
@@ -38,6 +40,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
         case .mouse:       return .pink
         case .general:     return .gray
         case .permissions: return .green
+        case .about:       return .teal
         }
     }
 }
@@ -59,19 +62,24 @@ struct SettingsView: View {
             }
             .navigationSplitViewColumnWidth(190)
         } detail: {
-            Form {
-                switch pane {
-                case .display:     displaySection
-                case .keyLabels:   keyLabelsSection
-                case .design:      designSection
-                case .mouse:       mouseSection
-                case .general:
-                    shortcutSection
-                    generalSection
-                case .permissions: permissionsSection
+            if pane == .about {
+                AboutView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                Form {
+                    switch pane {
+                    case .display:     displaySection
+                    case .keyLabels:   keyLabelsSection
+                    case .design:      designSection
+                    case .mouse:       mouseSection
+                    case .general:
+                        shortcutSection
+                        generalSection
+                    case .permissions, .about: permissionsSection
+                    }
                 }
+                .formStyle(.grouped)
             }
-            .formStyle(.grouped)
         }
         .frame(width: 730, height: 560)
         .onReceive(timer) { _ in
