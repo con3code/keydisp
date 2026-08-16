@@ -20,7 +20,9 @@ struct SettingsView: View {
             }
             settingsTab(L("権限", "Permissions")) { permissionsSection }
         }
-        .frame(width: 520, height: 580)
+        // タブがタイトルバーに密着しないよう、上に少し余白を取る
+        .padding(.top, 10)
+        .frame(width: 520, height: 590)
         .onReceive(timer) { _ in
             inputMonitoringOK = Permissions.inputMonitoringGranted
         }
@@ -36,7 +38,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var displaySection: some View {
-            Section(L("表示", "Display")) {
+            Section {
                 Toggle(L("すべてのキー入力を表示", "Show all key input"), isOn: $settings.showAllKeys)
                 Text(L("オフのときは、修飾キー付きのコンビネーションと特殊キー（↩ ⇥ ⎋ 矢印など）だけを表示します。オンにすると通常のタイピング（英数字など）も表示されます。",
                        "When off, only combinations with modifier keys and special keys (↩ ⇥ ⎋ arrows, etc.) are shown. When on, ordinary typing (letters and numbers) is also displayed."))
@@ -91,7 +93,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var keyLabelsSection: some View {
-            Section(L("キー表記", "Key Labels")) {
+            Section {
                 Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
                 Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
                        "When off, letters are always shown uppercase. When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). Combinations (⌘A etc.) always use uppercase."))
@@ -159,7 +161,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var designSection: some View {
-            Section(L("デザイン", "Design")) {
+            Section {
                 Picker(L("キーのスタイル", "Key Style"), selection: $settings.style) {
                     ForEach(KeyStyle.allCases) { s in
                         Text(s.label).tag(s)
@@ -196,7 +198,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var mouseSection: some View {
-            Section(L("マウス", "Mouse")) {
+            Section {
                 Toggle(L("クリック / ドラッグをカーソル位置に表示", "Show clicks / drags at the cursor"), isOn: $settings.mouseHighlight)
                 ColorPicker(L("ハイライトの色", "Highlight Color"), selection: settings.colorBinding(\.mouseColorHex))
                     .disabled(!settings.mouseHighlight)
@@ -255,7 +257,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder private var permissionsSection: some View {
-            Section(L("権限", "Permissions")) {
+            Section {
                 permissionRow(L("入力監視", "Input Monitoring"), granted: inputMonitoringOK) {
                     // 再リクエストすることで、一覧から削除された場合でも
                     // システム設定のリストに KeyDisp が再追加される
