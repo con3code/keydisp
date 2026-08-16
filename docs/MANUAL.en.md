@@ -123,6 +123,7 @@ Pressing the same key or shortcut repeatedly is grouped as a count — e.g. `⌘
 instead of adding new rows (on by default).
 
 - Key repeats from holding a key down (e.g. holding ⌫) are counted the same way
+- Continuous typing stays on one row, and a space typed mid-sentence joins it rather than splitting it
 - A small bounce animation signals each increment
 - If a different input comes in between, a new row is started instead
 
@@ -174,6 +175,8 @@ Open **Settings…** from the menu bar.
 | Show all key input | When on, ordinary typing (letters/numbers) is displayed too. When off (default), only combinations and special keys are shown |
 | Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
 | Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for more than 0.5 seconds**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
+| Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
+| Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
 | Size | Scale of the key display (×0.5–×5.0) |
 | Hold Duration | How long a row remains after release (0–5 s) |
 | Fade-out Duration | How long the fade takes (0.1–4 s) |
@@ -205,6 +208,9 @@ your own.
 |---|---|
 | Label Style | **Mac**: ⌘ ⌥ ↩ symbols / **Windows**: Ctrl, Alt, Enter… / **Mac + Windows**: combined like "⌘/Ctrl" |
 | Show 英数/かな as ABC/あいう | Matches the key legends on newer JIS keyboards |
+| Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
+| Show the symbol ⌥ produces | Shows what ⌥ plus a letter actually types, as in "⌥E → ´". Accent marks (dead keys) appear as the mark itself |
+| Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
 | Add 🌐 to input-switch keys | Marks the 英数/かな (ABC/あいう) keys with a globe so they are not mistaken for typed letters |
 | Show kana input as hiragana (JIS kana layout) | **For kana-input users.** While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols. Leave off if you use romaji input |
 | Separate keys with "+" | Shows combinations like Ctrl+Shift+S |
@@ -222,6 +228,7 @@ together, the duplicate Ctrl is shown only once.)
 |---|---|
 | Show clicks / drags at the cursor | Shows a circle at the cursor on click and while a button is held. Left click = filled circle, right click = double ring |
 | Highlight Color / Size | Circle color and diameter (30–120 px) |
+| Include held letter keys with clicks | Shows operations like holding A while clicking as "A + cursor mark". Only letter keys held down count, so clicking while typing normally is unaffected |
 | Show modifier + click in the key display | Shows e.g. ⌘ + click as a row in the key display with a cursor mark |
 
 ### Shortcut

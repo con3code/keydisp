@@ -34,6 +34,9 @@ final class KeyCaptureController {
     /// 直前のコンビネーション行（同じキーの連続押しを ×n にまとめる判定用）
     private var lastComboID: UUID?
     private var lastComboTokens: [String]?
+    /// 直前の矢印キー行（連続入力をまとめる判定用）
+    private var lastArrowID: UUID?
+    private var lastArrowTime: TimeInterval = 0
     /// タイピング（修飾なし文字入力)の連結用
     private var lastTypingID: UUID?
     private var lastTypingTime: TimeInterval = 0
@@ -129,6 +132,7 @@ final class KeyCaptureController {
         mouseEntryID = nil
         lastComboID = nil
         lastComboTokens = nil
+        lastArrowID = nil
     }
 
     // MARK: - 修飾キーが減ったときの保留処理
@@ -178,6 +182,49 @@ final class KeyCaptureController {
         }
         modifierShrinkWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + deliberateHoldDelay, execute: work)
+    }
+
+    // MARK: - 矢印キーのまとめ
+
+    /// 矢印キーを 1 行にまとめる。まとめた場合は true（呼び出し側は通常処理を行わない）。
+    /// - 同時押しのみ: いま他の矢印キーも押されているときだけ 1 行にまとめる（→↓ の斜め移動）
+    /// - 連続入力もまとめる: 続けて押した矢印も同じ行へ足していく（→→↓）
+    private func handleArrowGrouping(code: CGKeyCode, flags: CGEventFlags, now: TimeInterval) -> Bool {
+        guard settings.arrowGrouping != .off,
+              KeyFormatter.arrowKeyCodes.contains(code),
+              // 修飾キーとの組み合わせは従来どおりコンビネーションとして扱う
+              KeyFormatter.relevantFlags(flags).subtracting(.maskSecondaryFn).isEmpty
+        else { return false }
+
+        let token = KeyFormatter.keyLabel(code, shifted: false)
+        let otherArrowHeld = pressedKeys.contains {
+            $0 != code && KeyFormatter.arrowKeyCodes.contains($0)
+        }
+        let withinWindow = now - lastArrowTime < typingAppendWindow
+        let canJoin: Bool
+        switch settings.arrowGrouping {
+        case .simultaneous: canJoin = otherArrowHeld
+        case .consecutive:  canJoin = otherArrowHeld || withinWindow
+        case .off:          canJoin = false
+        }
+
+        if canJoin, let id = lastArrowID, model.phase(of: id) != nil, model.append(id: id, token: token) {
+            currentID = id
+            currentIsModifierOnly = false
+            lastArrowTime = now
+            return true
+        }
+
+        if let id = currentID { model.release(id: id) }
+        let id = model.begin(tokens: [token], isTyping: false)
+        currentID = id
+        currentIsModifierOnly = false
+        lastArrowID = id
+        lastArrowTime = now
+        lastTypingID = nil
+        lastComboID = id
+        lastComboTokens = [token]
+        return true
     }
 
     // MARK: - 取り残された表示の回収
@@ -370,10 +417,22 @@ final class KeyCaptureController {
             currentIsModifierOnly = false
             lastTypingID = id
             lastTypingTime = now
+        } else if handleArrowGrouping(code: code, flags: flags, now: now) {
+            // 矢印キーをまとめて表示した（→↓ の同時押しや連続操作）
+            return
         } else {
             // コンボ（修飾キー付き、または特殊キー単独）
-            let tokens = KeyFormatter.modifierTokens(flags, keyCode: code, pressOrder: modifierPressOrder) + [KeyFormatter.keyLabel(code, shifted: false)]
+            var tokens = KeyFormatter.modifierTokens(flags, keyCode: code, pressOrder: modifierPressOrder)
+                + [KeyFormatter.keyLabel(code, shifted: false)]
+            // ⌥ と組み合わせて入力される記号を併記する（⌥E → ´）
+            if settings.showOptionSymbols, flags == .maskAlternate || flags == [.maskAlternate, .maskShift],
+               KeyFormatter.isCharacterKey(code),
+               let symbol = KeyFormatter.optionSymbol(code, shifted: flags.contains(.maskShift)) {
+                tokens.append("→")
+                tokens.append(symbol)
+            }
             lastTypingID = nil
+            lastArrowID = nil
             model.releaseOtherTypingRows()
             if let id = currentID, currentIsModifierOnly {
                 if let target = mergeTargetID(for: tokens, ignoring: id) {
@@ -444,9 +503,33 @@ final class KeyCaptureController {
         case .leftMouseDown, .rightMouseDown, .otherMouseDown:
             let flags = KeyFormatter.relevantFlags(event.flags)
             currentModifiers = flags
-            // 修飾キーとの組み合わせのみ表示（単独クリックはマウスハイライトが担当）
-            guard !flags.isEmpty else { return }
-            let tokens = KeyFormatter.modifierTokens(flags, pressOrder: modifierPressOrder) + [KeyFormatter.clickToken(button: button)]
+            // 押しっぱなしの文字キー（A を押しながらクリック、など）
+            let heldChars = settings.showKeyClickCombo
+                ? pressedKeys.filter { KeyFormatter.isCharacterKey($0) }.sorted()
+                : []
+            // 修飾キーか押しっぱなしの文字キーとの組み合わせのみ表示
+            // （単独クリックはマウスハイライトが担当）
+            guard !flags.isEmpty || !heldChars.isEmpty else { return }
+            let charLabels = heldChars.map { KeyFormatter.keyLabel($0, shifted: false) }
+            let tokens = KeyFormatter.modifierTokens(flags, pressOrder: modifierPressOrder)
+                + charLabels
+                + [KeyFormatter.clickToken(button: button)]
+
+            // 押している文字キーが既にタイピング行として出ているなら、
+            // 新しい行を作らずその行を組み合わせ表示へ変える（「A」＋「A🖱」の二重表示を防ぐ）
+            if !charLabels.isEmpty,
+               let id = currentID,
+               model.phase(of: id) == .active,
+               model.entries.first(where: { $0.id == id })?.tokens == charLabels {
+                model.update(id: id, tokens: tokens, isTyping: false)
+                mouseEntryID = id
+                currentID = nil
+                currentIsModifierOnly = false
+                lastTypingID = nil
+                lastComboID = id
+                lastComboTokens = tokens
+                return
+            }
             lastTypingID = nil
             if let id = currentID, currentIsModifierOnly {
                 if let target = mergeTargetID(for: tokens, ignoring: id) {

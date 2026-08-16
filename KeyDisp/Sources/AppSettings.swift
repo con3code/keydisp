@@ -41,6 +41,23 @@ enum KeyStyle: Int, CaseIterable, Identifiable {
     }
 }
 
+/// 矢印キーのまとめ方
+enum ArrowGrouping: Int, CaseIterable, Identifiable {
+    case simultaneous = 0  // 物理的に同時に押しているものだけまとめる（→↓ = 斜め移動）
+    case consecutive = 1   // 続けて押したものもまとめる（→→↓ の連続操作）
+    case off = 2           // まとめない（1 回ごとに 1 行）
+
+    var id: Int { rawValue }
+
+    var label: String {
+        switch self {
+        case .simultaneous: return L("同時押しのみ", "Held together")
+        case .consecutive: return L("連続入力もまとめる", "Also consecutive")
+        case .off: return L("まとめない", "Off")
+        }
+    }
+}
+
 /// キー表記の OS スタイル
 enum OSLabelStyle: Int, CaseIterable, Identifiable {
     case mac = 0        // ⌘ ⌥ ↩ など macOS の記号
@@ -110,6 +127,12 @@ final class AppSettings: ObservableObject {
     @Published var globeOnImeKeys: Bool { didSet { d.set(globeOnImeKeys, forKey: "globeOnImeKeys") } }
     /// 修飾キーを押した順に表示する（オフなら ⌃⌥⇧⌘ の標準的な並び）
     @Published var modifierPressOrder: Bool { didSet { d.set(modifierPressOrder, forKey: "modifierPressOrder") } }
+    /// 矢印キーをまとめて表示する方法
+    @Published var arrowGrouping: ArrowGrouping { didSet { d.set(arrowGrouping.rawValue, forKey: "arrowGrouping") } }
+    /// ⌥ + キーで入力される特殊記号・アクセント記号を併記する（⌥E → ´）
+    @Published var showOptionSymbols: Bool { didSet { d.set(showOptionSymbols, forKey: "showOptionSymbols") } }
+    /// 押しっぱなしの文字キー + クリックをキー表示に出す
+    @Published var showKeyClickCombo: Bool { didSet { d.set(showKeyClickCombo, forKey: "showKeyClickCombo") } }
 
     // MARK: マウス
     /// クリック / ドラッグ中にカーソル位置へ円形ハイライトを表示する
@@ -168,6 +191,9 @@ final class AppSettings: ObservableObject {
         kanaDisplay = d.object(forKey: "kanaDisplay") as? Bool ?? false
         globeOnImeKeys = d.object(forKey: "globeOnImeKeys") as? Bool ?? true
         modifierPressOrder = d.object(forKey: "modifierPressOrder") as? Bool ?? false
+        arrowGrouping = ArrowGrouping(rawValue: d.object(forKey: "arrowGrouping") as? Int ?? 0) ?? .simultaneous
+        showOptionSymbols = d.object(forKey: "showOptionSymbols") as? Bool ?? false
+        showKeyClickCombo = d.object(forKey: "showKeyClickCombo") as? Bool ?? false
         mouseHighlight = d.object(forKey: "mouseHighlight") as? Bool ?? false
         mouseColorHex = d.object(forKey: "mouseColorHex") as? String ?? "#FFB300"
         mouseHighlightSize = d.object(forKey: "mouseHighlightSize") as? Double ?? 56

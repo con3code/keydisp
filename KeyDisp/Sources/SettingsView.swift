@@ -123,6 +123,23 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
+                Picker(L("矢印キーのまとめ方", "Arrow Keys"), selection: $settings.arrowGrouping) {
+                    ForEach(ArrowGrouping.allCases) { g in
+                        Text(g.label).tag(g)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(L("「同時押しのみ」は →↓ のように 2 つ以上を同時に押しているときだけ 1 行にまとめます（斜め移動の実演向け）。「連続入力もまとめる」は続けて押した矢印も同じ行に足していきます（→→↓ のようなカーソル移動向け）。",
+                       "\"Held together\" groups arrows only while two or more are down at once (for diagonal movement). \"Also consecutive\" keeps adding arrows pressed one after another to the same row (for cursor movement)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("⌥ で入力される記号を併記", "Show the symbol ⌥ produces"), isOn: $settings.showOptionSymbols)
+                Text(L("⌥ と文字キーの組み合わせで実際に入力される記号を「⌥E → ´」のように併記します。アクセント記号（デッドキー）も記号そのものを表示します。",
+                       "Shows what the combination actually types, as in \"⌥E → ´\". Accent marks (dead keys) are shown as the mark itself."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Toggle(L("修飾キーを押した順に表示", "Show modifiers in the order pressed"), isOn: $settings.modifierPressOrder)
                 Text(L("オフのときは説明書などで使われる標準的な並び（⌃ ⌥ ⇧ ⌘）で表示します。オンにすると実際に押した順で並ぶので、操作の手順を見せたいときに使えます。",
                        "When off, modifiers appear in the conventional order used in documentation (⌃ ⌥ ⇧ ⌘). When on, they appear in the order you actually pressed them — useful for showing the sequence of an operation."))
@@ -165,6 +182,12 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
 
                 Toggle(L("修飾キー + クリックをキー表示に出す", "Show modifier + click in the key display"), isOn: $settings.showClickInKeyDisplay)
+                Toggle(L("押しっぱなしの文字キー + クリックも出す", "Include held letter keys with clicks"), isOn: $settings.showKeyClickCombo)
+                    .disabled(!settings.showClickInKeyDisplay)
+                Text(L("A を押しながらクリックするような操作を「A + カーソルマーク」と表示します。押しっぱなしにしている文字キーだけが対象なので、通常のタイピング中のクリックには反応しません。",
+                       "Shows operations like holding A while clicking as \"A + cursor mark\". Only letter keys you are holding down count, so clicking while typing normally is unaffected."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Text(L("⌘ や ⇧ などを押しながらクリックすると、キー表示に「⌘ + カーソルマーク」のような行が表示されます。押している間は表示され続けます。",
                        "Clicking while holding ⌘, ⇧, etc. shows a row like \"⌘ + cursor mark\" in the key display. It stays visible while the button is held."))
                     .font(.caption)

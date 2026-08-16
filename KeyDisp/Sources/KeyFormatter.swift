@@ -129,6 +129,53 @@ enum KeyFormatter {
         return mapped.filter { seen.insert($0).inserted }
     }
 
+    /// 矢印キーのキーコード
+    static let arrowKeyCodes: Set<CGKeyCode> = [123, 124, 125, 126]
+
+    /// ⌥ を押しながらそのキーを打つと入力される文字（´ ¨ • ø など）。
+    /// 単独では見えないアクセント記号（デッドキー）は合成用の記号を返す。
+    static func optionSymbol(_ code: CGKeyCode, shifted: Bool) -> String? {
+        guard let layoutData = currentLayoutData() else { return nil }
+        var deadKeyState: UInt32 = 0
+        var chars = [UniChar](repeating: 0, count: 8)
+        var length = 0
+        var modifierKeyState = UInt32((optionKey >> 8) & 0xFF)
+        if shifted { modifierKeyState |= UInt32((shiftKey >> 8) & 0xFF) }
+        let status = layoutData.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> OSStatus in
+            guard let base = raw.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self) else { return -1 }
+            // デッドキーも記号として見えるよう、ここでは NoDeadKeys を指定しない
+            return UCKeyTranslate(
+                base, code, UInt16(kUCKeyActionDisplay), modifierKeyState,
+                UInt32(LMGetKbdType()), 0,
+                &deadKeyState, chars.count, &length, &chars
+            )
+        }
+        guard status == noErr else { return nil }
+        if length > 0 {
+            let s = String(utf16CodeUnits: chars, count: length)
+            return s.trimmingCharacters(in: .whitespaces).isEmpty ? nil : s
+        }
+        // デッドキー（´ ` ¨ ˆ ˜ など）は length 0 で状態だけ返るので、状態から記号を引き出す
+        if deadKeyState != 0 {
+            var s2 = deadKeyState
+            var chars2 = [UniChar](repeating: 0, count: 8)
+            var len2 = 0
+            let st = layoutData.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> OSStatus in
+                guard let base = raw.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self) else { return -1 }
+                // スペースと合成すると、その記号そのものが得られる
+                return UCKeyTranslate(
+                    base, 49, UInt16(kUCKeyActionDisplay), 0,
+                    UInt32(LMGetKbdType()), 0, &s2, chars2.count, &len2, &chars2
+                )
+            }
+            if st == noErr, len2 > 0 {
+                let s = String(utf16CodeUnits: chars2, count: len2)
+                return s.trimmingCharacters(in: .whitespaces).isEmpty ? nil : s
+            }
+        }
+        return nil
+    }
+
     /// 矢印・ファンクションキーなどには fn フラグが暗黙に付いて届く。
     /// 「いま押している修飾キー」としては実際に fn を押していないので取り除く。
     static func hasImplicitFn(_ code: CGKeyCode) -> Bool {
