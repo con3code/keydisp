@@ -27,6 +27,13 @@ struct SettingsView: View {
                        "Changes what happens when you release part of a combination and hold the rest for longer than the hold threshold. On: the combination so far stays as history and the keys still held start a new row (⇧⌘ → ⇧). Off: no row is added — the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination as one row."))
                     .font(.caption)
                     .foregroundColor(.secondary)
+                sliderRow(L("区切りの判定時間", "Hold Threshold"), value: $settings.holdJudgeDelay,
+                          in: 0.2...2.0, format: L("%.1f 秒", "%.1f s"))
+                Text(L("⇧⌘ のように複数のキーを押して片方だけ離したとき、残りをこの時間だけ押し続けると「意図して押している」と判断し、上の設定に従って表示が変わります。これより早く離しきった場合は、押した組み合わせ全体（⇧⌘）が 1 行として残ります。短くすると反応が早くなり、長くすると組み合わせがまとまりやすくなります。",
+                       "When you hold several keys — ⇧⌘, say — and let one go, keeping the rest down for this long counts as deliberate, and the display changes as the setting above describes. Release everything sooner and the whole combination (⇧⌘) stays as one row. Shorten it for a quicker reaction, lengthen it to keep combinations together."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
                 sliderRow(L("表示の持続時間", "Hold Duration"), value: $settings.holdDuration, in: 0...5, format: L("%.1f 秒", "%.1f s"))
                 sliderRow(L("フェードアウトの長さ", "Fade-out Duration"), value: $settings.fadeDuration, in: 0.1...4, format: L("%.1f 秒", "%.1f s"))
@@ -40,13 +47,6 @@ struct SettingsView: View {
                        "Move and resize the display area by dragging it in \"Edit Display Mode\" from the menu bar."))
                     .font(.caption)
                     .foregroundColor(.secondary)
-                sliderRow(L("区切りの判定時間", "Hold Threshold"), value: $settings.holdJudgeDelay,
-                          in: 0.2...2.0, format: L("%.1f 秒", "%.1f s"))
-                Text(L("修飾キーの一部を離したあと「押し続けている」と判断するまでの時間です。上の 2 つの設定で使われます。",
-                       "How long the remaining keys must stay down to count as deliberately held. Used by the two settings above."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
                 Toggle(L("画面の上端にカーソルを置いている間は履歴を消さない",
                          "Keep history while the cursor is at the top edge of the screen"),
                        isOn: $settings.topEdgeFreeze)
