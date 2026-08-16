@@ -223,31 +223,44 @@ struct OverlayRootView: View {
 struct FlowLayout: Layout {
     var spacing: CGFloat = 5
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        var x: CGFloat = 0, y: CGFloat = 0
-        var rowHeight: CGFloat = 0, totalWidth: CGFloat = 0
+    /// 行の分け方はこの関数だけが決める。計測（sizeThatFits）と配置（placeSubviews）で
+    /// 判定が食い違うと、配置時にだけ余分な折り返しが起きて後続のキーが行頭へ
+    /// 重なって見える。配置時に渡される矩形はピクセル境界への丸めで報告サイズより
+    /// わずかに狭いことがあるため、判定には必ず提案幅のほうを使う
+    /// （キーキャップ + Windows 表記のような端数幅のラベルで起きやすい）。
+    private func makeLines(
+        _ subviews: Subviews, maxWidth: CGFloat
+    ) -> [[(subview: LayoutSubviews.Element, size: CGSize)]] {
+        var lines: [[(subview: LayoutSubviews.Element, size: CGSize)]] = []
+        var line: [(subview: LayoutSubviews.Element, size: CGSize)] = []
+        var lineWidth: CGFloat = 0
         for sub in subviews {
             let size = sub.sizeThatFits(.unspecified)
-            if x > 0 && x + size.width > maxWidth {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
+            if !line.isEmpty && lineWidth + spacing + size.width > maxWidth {
+                lines.append(line)
+                line = []
+                lineWidth = 0
             }
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-            totalWidth = max(totalWidth, x - spacing)
+            lineWidth += line.isEmpty ? size.width : spacing + size.width
+            line.append((sub, size))
         }
-        return CGSize(width: totalWidth, height: y + rowHeight)
+        if !line.isEmpty { lines.append(line) }
+        return lines
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        var width: CGFloat = 0, height: CGFloat = 0
+        for (i, line) in makeLines(subviews, maxWidth: proposal.width ?? .infinity).enumerated() {
+            let lineWidth = line.reduce(0) { $0 + $1.size.width } + spacing * CGFloat(line.count - 1)
+            width = max(width, lineWidth)
+            height += (i > 0 ? spacing : 0) + (line.map(\.size.height).max() ?? 0)
+        }
+        return CGSize(width: width, height: height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var y = bounds.minY
-        var line: [(subview: LayoutSubviews.Element, size: CGSize)] = []
-        var lineWidth: CGFloat = 0
-
-        func flushLine() {
-            guard !line.isEmpty else { return }
+        for line in makeLines(subviews, maxWidth: proposal.width ?? bounds.width) {
             let rowHeight = line.map(\.size.height).max() ?? 0
             var x = bounds.minX
             for item in line {
@@ -257,19 +270,7 @@ struct FlowLayout: Layout {
                 x += item.size.width + spacing
             }
             y += rowHeight + spacing
-            line.removeAll()
-            lineWidth = 0
         }
-
-        for sub in subviews {
-            let size = sub.sizeThatFits(.unspecified)
-            if !line.isEmpty && lineWidth + size.width > bounds.width {
-                flushLine()
-            }
-            line.append((sub, size))
-            lineWidth += size.width + spacing
-        }
-        flushLine()
     }
 }
 
