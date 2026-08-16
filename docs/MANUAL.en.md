@@ -175,7 +175,7 @@ Open **Settings…** from the menu bar.
 |---|---|
 | Show all key input | When on, ordinary typing (letters/numbers) is displayed too. When off (default), only combinations and special keys are shown |
 | Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
-| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for more than 0.5 seconds**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
+| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for longer than the Hold Threshold**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
 | Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
 | Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
 | Size | Scale of the key display (×0.5–×5.0) |
