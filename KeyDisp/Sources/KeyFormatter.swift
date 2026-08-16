@@ -310,6 +310,12 @@ enum KeyFormatter {
 
     /// 入力切替キー（英数/かな・ABC/あいう、併存表記含む）のトークンかどうか。
     /// タイピングのトークンは 1 文字なので、これらの複数文字トークンと衝突しない。
+    /// 🌐 キー（fn 単独押しの専用コード）のトークンか。
+    /// 絵文字のままだとカラー表示になるため、描画側で SF Symbols の globe に置き換える
+    static func isGlobeToken(_ token: String) -> Bool {
+        token == "🌐"
+    }
+
     static func isImeSwitchToken(_ token: String) -> Bool {
         ["英数", "かな", "ABC", "あいう"].contains { token == $0 || token.hasPrefix($0 + "/") }
     }

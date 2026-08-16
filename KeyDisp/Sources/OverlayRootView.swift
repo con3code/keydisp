@@ -351,6 +351,9 @@ struct KeyEntryRow: View {
                 result = result + Text(KeyFormatter.optionResultArrowGlyph)
             } else if let symbol = KeyFormatter.clickSymbolName(for: token) {
                 result = result + Text(Image(systemName: symbol))
+            } else if KeyFormatter.isGlobeToken(token) {
+                // 🌐 キーは絵文字でなく単色のシンボルで描く（文字色に従う）
+                result = result + Text(Image(systemName: "globe"))
             } else if settings.globeOnImeKeys, KeyFormatter.isImeSwitchToken(token) {
                 result = result + Text(Image(systemName: "globe")) + Text(token)
             } else {
@@ -560,6 +563,10 @@ struct KeycapView: View {
     private var labelView: some View {
         if let symbol = KeyFormatter.clickSymbolName(for: token) {
             Image(systemName: symbol)
+                .font(.system(size: fontSize, weight: .bold))
+        } else if KeyFormatter.isGlobeToken(token) {
+            // 🌐 キーは絵文字でなく単色のシンボルで描く（文字色に従う）
+            Image(systemName: "globe")
                 .font(.system(size: fontSize, weight: .bold))
         } else if settings.globeOnImeKeys, KeyFormatter.isImeSwitchToken(token) {
             (Text(Image(systemName: "globe")) + Text(token))
