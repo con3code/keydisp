@@ -18,8 +18,8 @@ targets:
       properties:
         CFBundleDisplayName: KeyDisp
         CFBundleName: KeyDisp
-        CFBundleShortVersionString: "1.0.2"
-        CFBundleVersion: "3"
+        CFBundleShortVersionString: "1.0.3"
+        CFBundleVersion: "4"
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: true
         # Credits: con3code / Kotatsu Rin
