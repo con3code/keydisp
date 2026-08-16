@@ -137,6 +137,12 @@ struct SettingsView: View {
                        "Move and resize the display area by dragging it in \"Edit Display Mode\" from the menu bar."))
                     .font(.caption)
                     .foregroundColor(.secondary)
+                Toggle(L("キー表示をドラッグで移動できるようにする", "Drag the key display to move it"),
+                       isOn: $settings.dragToMove)
+                Text(L("オンにすると、表示中のキーを掴んでそのまま表示領域を動かせます。ドラッグしている間はフェードアウトが一時停止します。キー表示の真上をクリックしたときは下のアプリに届かなくなる点にご注意ください（何も表示されていない部分は素通りします）。",
+                       "When on, grab the keys on screen to move the display area directly. The fade-out pauses while you drag. Note that clicks directly on the keys no longer reach the app beneath (empty areas still click through)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Toggle(L("画面の上端にカーソルを置いている間は履歴を消さない",
                          "Keep history while the cursor is at the top edge of the screen"),
                        isOn: $settings.topEdgeFreeze)

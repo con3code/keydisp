@@ -76,6 +76,46 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.refreshVisibility() }
             .store(in: &cancellables)
+
+        // 「ドラッグで移動」オプションに応じてマウスの受付を切り替える
+        settings.$dragToMove
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refreshMouseAcceptance() }
+            .store(in: &cancellables)
+        refreshMouseAcceptance()
+
+        // 表示部分を掴んだらドラッグ開始とみなし、離すまでフェードを一時停止する。
+        // 透明な部分のクリックはウィンドウに届かない（下のアプリへ素通し）ので、
+        // このモニタが反応するのは実際に見えているキー表示を掴んだときだけ
+        NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown]) { [weak self] event in
+            if let self, event.window === self.panel { self.beginDragFreeze() }
+            return event
+        }
+    }
+
+    /// 通常モードでもドラッグ移動を許可するか（編集モード中は常に許可）
+    private func refreshMouseAcceptance() {
+        panel.ignoresMouseEvents = !(settings.editMode || settings.dragToMove)
+    }
+
+    // MARK: - ドラッグ中のフェード一時停止
+
+    private var dragEndWatcher: Timer?
+
+    /// ドラッグ / リサイズ中は表示を凍結する。
+    /// ウィンドウの移動ループは WindowServer 側で進み mouseUp がアプリに
+    /// 届かないことがあるため、終了はボタンの実状態を監視して検出する
+    private func beginDragFreeze() {
+        guard dragEndWatcher == nil else { return }
+        model.setFreeze(.dragging, true)
+        dragEndWatcher = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
+            guard NSEvent.pressedMouseButtons & 1 == 0 else { return }
+            timer.invalidate()
+            guard let self else { return }
+            self.dragEndWatcher = nil
+            self.model.setFreeze(.dragging, false)
+        }
     }
 
     /// 表示すべき内容があるときだけウィンドウを画面に載せる。
@@ -146,7 +186,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     }
 
     func setEditMode(_ editing: Bool) {
-        panel.ignoresMouseEvents = !editing
+        refreshMouseAcceptance()
         refreshVisibility()
     }
 
@@ -191,6 +231,14 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
 
     func windowDidMove(_ notification: Notification) {
         saveFrame()
+    }
+
+    func windowWillMove(_ notification: Notification) {
+        beginDragFreeze()
+    }
+
+    func windowWillStartLiveResize(_ notification: Notification) {
+        beginDragFreeze()
     }
 
     func windowDidResize(_ notification: Notification) {

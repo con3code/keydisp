@@ -103,6 +103,7 @@ final class AppSettings: ObservableObject {
     @Published var holdJudgeDelay: Double { didSet { d.set(holdJudgeDelay, forKey: "holdJudgeDelay") } }
     /// 画面上端にカーソルを置いている間は履歴を消さない（フェードを止める）
     @Published var topEdgeFreeze: Bool { didSet { d.set(topEdgeFreeze, forKey: "topEdgeFreeze") } }
+    @Published var dragToMove: Bool { didSet { d.set(dragToMove, forKey: "dragToMove") } }
 
     // MARK: デザイン
     @Published var style: KeyStyle { didSet { d.set(style.rawValue, forKey: "keyStyle") } }
@@ -180,6 +181,7 @@ final class AppSettings: ObservableObject {
         stepModifierRelease = d.object(forKey: "stepModifierRelease") as? Bool ?? false
         holdJudgeDelay = d.object(forKey: "holdJudgeDelay") as? Double ?? 0.5
         topEdgeFreeze = d.object(forKey: "topEdgeFreeze") as? Bool ?? false
+        dragToMove = d.object(forKey: "dragToMove") as? Bool ?? false
         style = KeyStyle(rawValue: d.object(forKey: "keyStyle") as? Int ?? 1) ?? .keycap
         textColorHex = d.object(forKey: "textColorHex") as? String ?? "#FFFFFF"
         keyColorHex = d.object(forKey: "keyColorHex") as? String ?? "#1C1C22"

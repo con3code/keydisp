@@ -56,13 +56,27 @@ final class KeyDisplayModel: ObservableObject {
         return true
     }
 
-    /// 履歴を消さずに保持する（画面上端にカーソルを置いている間など）
-    private(set) var isFrozen = false
+    /// 凍結の理由。複数が同時に成立しうる（上端フリーズ中にドラッグなど）ので集合で持つ
+    enum FreezeReason: Hashable {
+        case topEdge   // 画面上端にカーソルがある
+        case dragging  // オーバーレイをドラッグ / リサイズ中
+    }
+    private var freezeReasons: Set<FreezeReason> = []
 
+    /// 履歴を消さずに保持しているか（いずれかの理由が立っている間）
+    var isFrozen: Bool { !freezeReasons.isEmpty }
+
+    /// 上端フリーズ用の従来 API（ホットエッジ監視から呼ばれる）
     func setFrozen(_ frozen: Bool) {
-        guard frozen != isFrozen else { return }
-        isFrozen = frozen
-        if frozen {
+        setFreeze(.topEdge, frozen)
+    }
+
+    /// 理由を指定して凍結を出し入れする。全体の凍結状態が変わったときだけ反映する
+    func setFreeze(_ reason: FreezeReason, _ active: Bool) {
+        let wasFrozen = isFrozen
+        if active { freezeReasons.insert(reason) } else { freezeReasons.remove(reason) }
+        guard isFrozen != wasFrozen else { return }
+        if isFrozen {
             // 進行中の消去予定をすべて取り消し、消えかけの行は見える状態へ戻す
             for id in pendingWork.keys { cancelWork(for: id) }
             for idx in entries.indices where entries[idx].phase == .fading {
