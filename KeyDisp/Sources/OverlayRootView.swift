@@ -43,6 +43,20 @@ enum OverlayMetrics {
         }
     }
 
+    /// 1 行に収まるトークン（キー）の数
+    static func tokensPerLine(width: CGFloat, settings: AppSettings) -> Int {
+        max(1, Int(width / tokenWidth(settings)))
+    }
+
+    /// キーが 1 つずつ独立して並ぶスタイルかどうか。
+    /// この場合は文字を流し込む折り返しではなく、行を改めるタイプライター式が合う。
+    static func usesTypewriterWrap(_ settings: AppSettings) -> Bool {
+        switch settings.style {
+        case .keycap, .customImage: return true
+        case .simple:               return false
+        }
+    }
+
     /// トークン数と幅から、折り返して何行になるかを見積もる
     static func wrappedLines(tokenCount: Int, width: CGFloat, settings: AppSettings) -> Int {
         let perLine = max(1, Int(width / tokenWidth(settings)))
