@@ -11,6 +11,72 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section(L("キー表記", "Key Labels")) {
+                Picker(L("表記スタイル", "Label Style"), selection: $settings.osLabelStyle) {
+                    ForEach(OSLabelStyle.allCases) { s in
+                        Text(s.label).tag(s)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(L("Windows 表記はショートカット互換の対応で表示します: ⌘/⌃ → Ctrl、⌥ → Alt、↩ → Enter、⌫ → BackSpace、英数 → 無変換、かな → 変換 など。併存表示では「⌘/Ctrl」のように両方を表示します。",
+                       "Windows labels use shortcut-equivalent mapping: ⌘/⌃ → Ctrl, ⌥ → Alt, ↩ → Enter, ⌫ → BackSpace, etc. Combined mode shows both, e.g. \"⌘/Ctrl\"."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("「英数/かな」を「ABC/あいう」と表示", "Show 英数/かな as ABC/あいう"), isOn: $settings.jisABCLabels)
+                Text(L("新しい JIS 配列キーボードの刻印（ABC / あいう）に合わせた表記です。",
+                       "Matches the key legends (ABC / あいう) on newer JIS keyboards."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
+                Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
+                       "When off, letters are always shown uppercase. When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). Combinations (⌘A etc.) always use uppercase."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Picker(L("矢印キーのまとめ方", "Arrow Keys"), selection: $settings.arrowGrouping) {
+                    ForEach(ArrowGrouping.allCases) { g in
+                        Text(g.label).tag(g)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text(L("「同時押しのみ」は →↓ のように 2 つ以上を同時に押しているときだけ 1 行にまとめます（斜め移動の実演向け）。「連続入力もまとめる」は続けて押した矢印も同じ行に足していきます（→→↓ のようなカーソル移動向け）。",
+                       "\"Held together\" groups arrows only while two or more are down at once (for diagonal movement). \"Also consecutive\" keeps adding arrows pressed one after another to the same row (for cursor movement)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("⌥ で入力される記号を併記", "Show the symbol ⌥ produces"), isOn: $settings.showOptionSymbols)
+                Text(L("⌥ と文字キーの組み合わせで実際に入力される記号を「⌥E → ´」のように併記します。アクセント記号（デッドキー）も記号そのものを表示します。",
+                       "Shows what the combination actually types, as in \"⌥E → ´\". Accent marks (dead keys) are shown as the mark itself."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("修飾キーを押した順に表示", "Show modifiers in the order pressed"), isOn: $settings.modifierPressOrder)
+                Text(L("オフのときは説明書などで使われる標準的な並び（⌃ ⌥ ⇧ ⌘）で表示します。オンにすると実際に押した順で並ぶので、操作の手順を見せたいときに使えます。",
+                       "When off, modifiers appear in the conventional order used in documentation (⌃ ⌥ ⇧ ⌘). When on, they appear in the order you actually pressed them — useful for showing the sequence of an operation."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("入力切替キーに 🌐 を付ける", "Add 🌐 to input-switch keys"), isOn: $settings.globeOnImeKeys)
+                Text(L("英数/かな（ABC/あいう）キーの表示に地球儀マークを付けて、通常の文字入力と区別しやすくします。キーボードに地球儀キーが別にあって紛らわしい場合はオフにしてください。",
+                       "Adds a globe mark to the 英数/かな (ABC/あいう) key display to distinguish them from ordinary typing. Turn off if it is confusing because your keyboard has a separate Globe key."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("かな入力（JIS かな配列）をひらがなで表示", "Show kana input as hiragana (JIS kana layout)"), isOn: $settings.kanaDisplay)
+                Text(L("かな入力をお使いの場合にオンにしてください。日本語入力モード中のタイピング表示が JIS かな配列のひらがな・記号（ち、と、し… や 「」、。など）になり、英数モードに切り替えるとアルファベット表示に戻ります。ローマ字入力をお使いの場合はオフのままにしてください（入力方式は自動判別できないため）。",
+                       "Turn this on if you use kana input. While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols; switching to ABC mode returns to letters. Leave it off if you use romaji input (the input style cannot be detected automatically)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle(L("キーの間に「+」を表示", "Separate keys with \"+\""), isOn: $settings.plusSeparator)
+                Text(L("コンビネーションを Ctrl+Shift+S のように区切って表示します（タイピングの連続表示には付きません）。",
+                       "Shows combinations like Ctrl+Shift+S (not applied to continuous typing)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             Section(L("表示", "Display")) {
                 Toggle(L("すべてのキー入力を表示", "Show all key input"), isOn: $settings.showAllKeys)
                 Text(L("オフのときは、修飾キー付きのコンビネーションと特殊キー（↩ ⇥ ⎋ 矢印など）だけを表示します。オンにすると通常のタイピング（英数字など）も表示されます。",
@@ -95,72 +161,6 @@ struct SettingsView: View {
                 }
                 Text(L("カスタム画像は「カスタム画像」スタイル選択時に、キー表示の背景として使われます。",
                        "The custom image is used as the key display background when the \"Custom Image\" style is selected."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Section(L("キー表記", "Key Labels")) {
-                Picker(L("表記スタイル", "Label Style"), selection: $settings.osLabelStyle) {
-                    ForEach(OSLabelStyle.allCases) { s in
-                        Text(s.label).tag(s)
-                    }
-                }
-                .pickerStyle(.segmented)
-                Text(L("Windows 表記はショートカット互換の対応で表示します: ⌘/⌃ → Ctrl、⌥ → Alt、↩ → Enter、⌫ → BackSpace、英数 → 無変換、かな → 変換 など。併存表示では「⌘/Ctrl」のように両方を表示します。",
-                       "Windows labels use shortcut-equivalent mapping: ⌘/⌃ → Ctrl, ⌥ → Alt, ↩ → Enter, ⌫ → BackSpace, etc. Combined mode shows both, e.g. \"⌘/Ctrl\"."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("「英数/かな」を「ABC/あいう」と表示", "Show 英数/かな as ABC/あいう"), isOn: $settings.jisABCLabels)
-                Text(L("新しい JIS 配列キーボードの刻印（ABC / あいう）に合わせた表記です。",
-                       "Matches the key legends (ABC / あいう) on newer JIS keyboards."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
-                Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
-                       "When off, letters are always shown uppercase. When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). Combinations (⌘A etc.) always use uppercase."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Picker(L("矢印キーのまとめ方", "Arrow Keys"), selection: $settings.arrowGrouping) {
-                    ForEach(ArrowGrouping.allCases) { g in
-                        Text(g.label).tag(g)
-                    }
-                }
-                .pickerStyle(.segmented)
-                Text(L("「同時押しのみ」は →↓ のように 2 つ以上を同時に押しているときだけ 1 行にまとめます（斜め移動の実演向け）。「連続入力もまとめる」は続けて押した矢印も同じ行に足していきます（→→↓ のようなカーソル移動向け）。",
-                       "\"Held together\" groups arrows only while two or more are down at once (for diagonal movement). \"Also consecutive\" keeps adding arrows pressed one after another to the same row (for cursor movement)."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("⌥ で入力される記号を併記", "Show the symbol ⌥ produces"), isOn: $settings.showOptionSymbols)
-                Text(L("⌥ と文字キーの組み合わせで実際に入力される記号を「⌥E → ´」のように併記します。アクセント記号（デッドキー）も記号そのものを表示します。",
-                       "Shows what the combination actually types, as in \"⌥E → ´\". Accent marks (dead keys) are shown as the mark itself."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("修飾キーを押した順に表示", "Show modifiers in the order pressed"), isOn: $settings.modifierPressOrder)
-                Text(L("オフのときは説明書などで使われる標準的な並び（⌃ ⌥ ⇧ ⌘）で表示します。オンにすると実際に押した順で並ぶので、操作の手順を見せたいときに使えます。",
-                       "When off, modifiers appear in the conventional order used in documentation (⌃ ⌥ ⇧ ⌘). When on, they appear in the order you actually pressed them — useful for showing the sequence of an operation."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("入力切替キーに 🌐 を付ける", "Add 🌐 to input-switch keys"), isOn: $settings.globeOnImeKeys)
-                Text(L("英数/かな（ABC/あいう）キーの表示に地球儀マークを付けて、通常の文字入力と区別しやすくします。キーボードに地球儀キーが別にあって紛らわしい場合はオフにしてください。",
-                       "Adds a globe mark to the 英数/かな (ABC/あいう) key display to distinguish them from ordinary typing. Turn off if it is confusing because your keyboard has a separate Globe key."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("かな入力（JIS かな配列）をひらがなで表示", "Show kana input as hiragana (JIS kana layout)"), isOn: $settings.kanaDisplay)
-                Text(L("かな入力をお使いの場合にオンにしてください。日本語入力モード中のタイピング表示が JIS かな配列のひらがな・記号（ち、と、し… や 「」、。など）になり、英数モードに切り替えるとアルファベット表示に戻ります。ローマ字入力をお使いの場合はオフのままにしてください（入力方式は自動判別できないため）。",
-                       "Turn this on if you use kana input. While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols; switching to ABC mode returns to letters. Leave it off if you use romaji input (the input style cannot be detected automatically)."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Toggle(L("キーの間に「+」を表示", "Separate keys with \"+\""), isOn: $settings.plusSeparator)
-                Text(L("コンビネーションを Ctrl+Shift+S のように区切って表示します（タイピングの連続表示には付きません）。",
-                       "Shows combinations like Ctrl+Shift+S (not applied to continuous typing)."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
