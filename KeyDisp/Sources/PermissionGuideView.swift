@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// 初回起動時などに表示する、権限設定への誘導画面
@@ -45,10 +46,13 @@ struct PermissionGuideView: View {
                 }
             }
 
-            Text(L("許可を変更した後、アプリの再起動を求められる場合があります。",
-                   "macOS may ask you to restart the app after changing permissions."))
-                .font(.caption)
-                .foregroundColor(.secondary)
+            HStack(spacing: 10) {
+                Text(L("オンにしても［開始］が押せないままの場合は、再起動すると反映されます。",
+                       "If Start stays disabled after turning it on, restarting the app applies it."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Button(L("アプリを再起動", "Restart App")) { relaunch() }
+            }
 
             HStack {
                 Button(L("あとで", "Later")) { onClose() }
@@ -66,6 +70,16 @@ struct PermissionGuideView: View {
             if inputMonitoringOK {
                 onCompleted()
             }
+        }
+    }
+
+    /// 自分自身を再起動する。入力監視の許可は実行中のプロセスへは反映されず、
+    /// 再起動して初めて CGPreflightListenEventAccess が true を返すようになるため。
+    private func relaunch() {
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
         }
     }
 
