@@ -44,15 +44,19 @@ final class KeyCaptureController {
     /// 連結の上限（暴走を防ぐための安全弁）
     private let maxTypingTokens = 400
 
-    /// タイピング 1 行に入るキーの数。
+    /// タイピング行にもう 1 文字入るか。
     /// キーキャップ・カスタム画像はキーが 1 つずつ独立して並ぶので、端まで来たら
     /// 折り返さずに行を改めて先頭から続ける（タイプライター式）。
+    /// 端の判定は実際の文字幅を測って行う（文字数の目安だと判定が甘くなり、
+    /// 行の中で折り返しが起きた後に遅れて区切られてしまう）。
     /// シンプル表示は文字が流れる方が自然なので、従来どおり折り返しに任せる。
-    private var typingTokensPerLine: Int {
-        guard OverlayMetrics.usesTypewriterWrap(settings) else { return maxTypingTokens }
+    private func typingRowHasRoom(id: UUID, adding token: String) -> Bool {
+        guard let tokens = model.entries.first(where: { $0.id == id })?.tokens else { return false }
+        guard tokens.count < maxTypingTokens else { return false }
+        guard OverlayMetrics.usesTypewriterWrap(settings) else { return true }
         let width = CGFloat(settings.overlayContentWidth)
-        guard width > 0 else { return maxTypingTokens }
-        return min(maxTypingTokens, OverlayMetrics.tokensPerLine(width: width, settings: settings))
+        guard width > 0 else { return true }
+        return OverlayMetrics.typingLineFits(tokens + [token], width: width, settings: settings)
     }
 
     private(set) var isRunning = false
@@ -471,7 +475,7 @@ final class KeyCaptureController {
             if let id = lastTypingID,
                now - lastTypingTime < typingAppendWindow,
                model.phase(of: id) != nil,
-               (model.entries.first(where: { $0.id == id })?.tokens.count ?? typingTokensPerLine) < typingTokensPerLine,
+               typingRowHasRoom(id: id, adding: token),
                model.append(id: id, token: token) {
                 currentID = id
                 lastTypingTime = now

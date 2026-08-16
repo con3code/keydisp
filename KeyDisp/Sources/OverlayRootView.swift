@@ -32,7 +32,7 @@ enum OverlayMetrics {
         let scale = CGFloat(settings.displayScale)
         switch settings.style {
         case .keycap:               return keycapWidth(token) * scale
-        case .simple, .customImage: return 22 * scale * CGFloat(max(1, token.count))
+        case .simple, .customImage: return textWidth(token) * scale
         }
     }
 
@@ -48,10 +48,48 @@ enum OverlayMetrics {
         return w
     }
 
-    /// キーとキーの間の「+」が占める幅（キーキャップ表示で「+」を出しているときだけ）
+    /// 表示倍率 1 のときの文字トークンの幅（シンプル / カスタム画像の 34pt 文字）。
+    /// 実際の描画と同じ書体（丸みのあるシステムフォント）で測る。
+    private static var textWidthCache: [String: CGFloat] = [:]
+    private static let typingFont: NSFont = {
+        let base = NSFont.systemFont(ofSize: 34, weight: .semibold)
+        if let desc = base.fontDescriptor.withDesign(.rounded),
+           let rounded = NSFont(descriptor: desc, size: 34) {
+            return rounded
+        }
+        return base
+    }()
+    private static func textWidth(_ token: String) -> CGFloat {
+        if let w = textWidthCache[token] { return w }
+        let w = (token as NSString).size(withAttributes: [.font: typingFont]).width
+        textWidthCache[token] = w
+        return w
+    }
+
+    /// キーとキーの間の区切りが占める幅（「+」または細いスペース）
     static func separatorWidth(_ settings: AppSettings) -> CGFloat {
-        guard settings.style == .keycap, settings.plusSeparator else { return 0 }
-        return 18 * CGFloat(settings.displayScale)
+        let scale = CGFloat(settings.displayScale)
+        switch settings.style {
+        case .keycap:
+            return settings.plusSeparator ? 18 * scale : 0
+        case .simple, .customImage:
+            return textWidth(settings.plusSeparator ? "+" : "\u{2009}") * scale
+        }
+    }
+
+    /// タイプライター式の行（キーキャップ / カスタム画像）に、
+    /// このトークン列が 1 行のまま収まるかどうか
+    static func typingLineFits(_ tokens: [String], width: CGFloat, settings: AppSettings) -> Bool {
+        let needed = tokens.reduce(0) { $0 + tokenWidth($1, settings: settings) }
+        switch settings.style {
+        case .keycap:
+            return needed <= width
+        case .customImage:
+            // 行の背景の内側余白（左右 22 ずつ）のぶんだけ文字の領域は狭い
+            return needed <= width - 44 * CGFloat(settings.displayScale)
+        case .simple:
+            return true
+        }
     }
 
     /// 折り返して増えた 1 行ぶんの高さ
@@ -61,12 +99,6 @@ enum OverlayMetrics {
         case .keycap:               return 55 * scale
         case .simple, .customImage: return 41 * scale
         }
-    }
-
-    /// 1 行に収まるトークン（キー）の数。
-    /// タイピングの折り返し用なので、1 文字ぶんの幅で数える。
-    static func tokensPerLine(width: CGFloat, settings: AppSettings) -> Int {
-        max(1, Int(width / tokenWidth("A", settings: settings)))
     }
 
     /// キーが 1 つずつ独立して並ぶスタイルかどうか。
