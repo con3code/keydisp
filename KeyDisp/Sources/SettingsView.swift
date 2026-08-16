@@ -2,39 +2,94 @@ import AppKit
 import Carbon
 import SwiftUI
 
+
+/// 設定画面のサイドバー項目
+enum SettingsPane: String, CaseIterable, Identifiable {
+    case display, keyLabels, design, mouse, general, permissions
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .display:     return L("表示", "Display")
+        case .keyLabels:   return L("キー表記", "Key Labels")
+        case .design:      return L("デザイン", "Design")
+        case .mouse:       return L("マウス", "Mouse")
+        case .general:     return L("一般", "General")
+        case .permissions: return L("権限", "Permissions")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .display:     return "macwindow"
+        case .keyLabels:   return "keyboard"
+        case .design:      return "paintpalette.fill"
+        case .mouse:       return "computermouse.fill"
+        case .general:     return "gearshape.fill"
+        case .permissions: return "lock.shield.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .display:     return .blue
+        case .keyLabels:   return .indigo
+        case .design:      return .orange
+        case .mouse:       return .pink
+        case .general:     return .gray
+        case .permissions: return .green
+        }
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @State private var inputMonitoringOK = Permissions.inputMonitoringGranted
+    @State private var pane: SettingsPane = .display
 
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        TabView {
-            settingsTab(L("表示", "Display")) { displaySection }
-            settingsTab(L("キー表記", "Key Labels")) { keyLabelsSection }
-            settingsTab(L("デザイン", "Design")) { designSection }
-            settingsTab(L("マウス", "Mouse")) { mouseSection }
-            settingsTab(L("一般", "General")) {
-                shortcutSection
-                generalSection
+        // システム設定と同じ、左サイドバーで切り替える形式
+        NavigationSplitView {
+            List(selection: $pane) {
+                ForEach(SettingsPane.allCases) { pane in
+                    sidebarRow(pane).tag(pane)
+                }
             }
-            settingsTab(L("権限", "Permissions")) { permissionsSection }
+            .navigationSplitViewColumnWidth(190)
+        } detail: {
+            Form {
+                switch pane {
+                case .display:     displaySection
+                case .keyLabels:   keyLabelsSection
+                case .design:      designSection
+                case .mouse:       mouseSection
+                case .general:
+                    shortcutSection
+                    generalSection
+                case .permissions: permissionsSection
+                }
+            }
+            .formStyle(.grouped)
         }
-        // タブがタイトルバーに密着しないよう、上に少し余白を取る
-        .padding(.top, 10)
-        .frame(width: 520, height: 590)
+        .frame(width: 730, height: 560)
         .onReceive(timer) { _ in
             inputMonitoringOK = Permissions.inputMonitoringGranted
         }
     }
 
-    /// タブ 1 枚ぶんの設定フォーム
-    private func settingsTab<Content: View>(
-        _ title: String, @ViewBuilder content: () -> Content
-    ) -> some View {
-        Form { content() }
-            .formStyle(.grouped)
-            .tabItem { Text(title) }
+    /// サイドバーの 1 行（システム設定風の角丸カラーアイコン + 名前）
+    private func sidebarRow(_ pane: SettingsPane) -> some View {
+        Label {
+            Text(pane.title)
+        } icon: {
+            Image(systemName: pane.symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 22, height: 22)
+                .background(RoundedRectangle(cornerRadius: 6).fill(pane.color))
+        }
     }
 
     @ViewBuilder private var displaySection: some View {
