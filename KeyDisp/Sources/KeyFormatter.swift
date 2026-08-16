@@ -132,6 +132,16 @@ enum KeyFormatter {
     /// 矢印キーのキーコード
     static let arrowKeyCodes: Set<CGKeyCode> = [123, 124, 125, 126]
 
+    /// 「⌥E → ´」のように ⌥ で入力される記号を併記するときの矢印。
+    /// これはキーではないので、キーキャップ表示ではキーの形にせず矢印だけを描く。
+    /// 「→」キーのトークンと見分けるため、見た目の文字ではなく私用領域の符号を持たせる。
+    static let optionResultArrow = "\u{E000}"
+
+    /// 併記の矢印を実際に描くときの字
+    static let optionResultArrowGlyph = "→"
+
+    static func isOptionResultArrow(_ token: String) -> Bool { token == optionResultArrow }
+
     /// ⌥ を押しながらそのキーを打つと入力される文字（´ ¨ • ø など）。
     /// 単独では見えないアクセント記号（デッドキー）は合成用の記号を返す。
     static func optionSymbol(_ code: CGKeyCode, shifted: Bool) -> String? {

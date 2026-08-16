@@ -462,7 +462,7 @@ final class KeyCaptureController {
             if settings.showOptionSymbols, flags == .maskAlternate || flags == [.maskAlternate, .maskShift],
                KeyFormatter.isCharacterKey(code),
                let symbol = KeyFormatter.optionSymbol(code, shifted: flags.contains(.maskShift)) {
-                tokens.append("→")
+                tokens.append(KeyFormatter.optionResultArrow)
                 tokens.append(symbol)
             }
             lastTypingID = nil

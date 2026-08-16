@@ -240,9 +240,17 @@ struct KeyEntryRow: View {
     /// タイピングの連結は 1 つの語として読ませたいので、区切りは入れない。
     /// いずれの場合もゼロ幅スペース (U+200B) を添えて、幅を超えたらそこで折り返せるようにする
     /// （長い連続入力は 1 語とみなされ、そのままでは折り返せず切り捨てられるため）
-    private var tokenSeparator: String {
-        if showPlus { return "+\u{200B}" }
+    private func tokenSeparator(before index: Int) -> String {
+        if showPlus && !touchesOptionArrow(at: index) { return "+\u{200B}" }
         return entry.isTyping ? "\u{200B}" : "\u{2009}\u{200B}"
+    }
+
+    /// 「⌥E → ´」の矢印に接する境目かどうか。
+    /// 矢印はキーどうしの組み合わせを表すものではないので、ここは「+」でつながない。
+    private func touchesOptionArrow(at index: Int) -> Bool {
+        guard index > 0, index < entry.tokens.count else { return false }
+        return KeyFormatter.isOptionResultArrow(entry.tokens[index])
+            || KeyFormatter.isOptionResultArrow(entry.tokens[index - 1])
     }
 
     /// トークン列を Text として連結する（クリックトークンはカーソル画像に置き換え）
@@ -250,9 +258,11 @@ struct KeyEntryRow: View {
         var result = Text("")
         for (i, token) in entry.tokens.enumerated() {
             if i > 0 {
-                result = result + Text(tokenSeparator)
+                result = result + Text(tokenSeparator(before: i))
             }
-            if let symbol = KeyFormatter.clickSymbolName(for: token) {
+            if KeyFormatter.isOptionResultArrow(token) {
+                result = result + Text(KeyFormatter.optionResultArrowGlyph)
+            } else if let symbol = KeyFormatter.clickSymbolName(for: token) {
                 result = result + Text(Image(systemName: symbol))
             } else if settings.globeOnImeKeys, KeyFormatter.isImeSwitchToken(token) {
                 result = result + Text(Image(systemName: "globe")) + Text(token)
@@ -305,13 +315,21 @@ struct KeyEntryRow: View {
         case .keycap:
             FlowLayout(spacing: 5 * settings.displayScale) {
                 ForEach(Array(entry.tokens.enumerated()), id: \.offset) { index, token in
-                    if index > 0 && showPlus {
+                    if index > 0 && showPlus && !touchesOptionArrow(at: index) {
                         Text("+")
                             .font(.system(size: 20 * settings.displayScale, weight: .bold, design: .rounded))
                             .foregroundColor(textColor)
                             .shadow(color: .black.opacity(0.5), radius: 2)
                     }
-                    KeycapView(token: token, settings: settings)
+                    if KeyFormatter.isOptionResultArrow(token) {
+                        // 併記の矢印はキーではないので、「+」と同じく素の文字で描く
+                        Text(KeyFormatter.optionResultArrowGlyph)
+                            .font(.system(size: 20 * settings.displayScale, weight: .bold, design: .rounded))
+                            .foregroundColor(textColor)
+                            .shadow(color: .black.opacity(0.5), radius: 2)
+                    } else {
+                        KeycapView(token: token, settings: settings)
+                    }
                 }
                 if entry.count > 1 {
                     Text("×\(entry.count)")
