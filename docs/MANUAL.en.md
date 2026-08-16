@@ -108,26 +108,6 @@ With default settings, the following inputs are shown:
 Ordinary typing (letters and numbers without modifiers) is **not** shown by default.
 Turn on **"Show all key input"** in the settings to display it.
 
-### Key Labels
-
-| Setting | Description |
-|---|---|
-| Label Style | **Mac**: ⌘ ⌥ ↩ symbols / **Windows**: Ctrl, Alt, Enter… / **Mac + Windows**: combined like "⌘/Ctrl" |
-| Show 英数/かな as ABC/あいう | Matches the key legends on newer JIS keyboards |
-| Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
-| Show the symbol ⌥ produces | An ⌥ combination typed mid-sentence always joins the row as the symbol itself (Ω), regardless of this setting. Pressed on its own, it reads "⌥Z" with this off and "⌥Z → Ω" with it on. Accent marks (dead keys) appear as the mark itself |
-| Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
-| Add 🌐 to input-switch keys | Marks the 英数/かな (ABC/あいう) keys with a globe so they are not mistaken for typed letters |
-| Show kana input as hiragana (JIS kana layout) | **For kana-input users.** While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols. Leave off if you use romaji input |
-| Separate keys with "+" | Shows combinations like Ctrl+Shift+S |
-| Distinguish upper/lower case letters | When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). When off (default), letters are always uppercase |
-
-**Windows label mapping:** ⌘/⌃ → Ctrl, ⌥ → Alt, ⇧ → Shift, ↩ → Enter,
-⌫ → BackSpace, ⌦ → Delete, ⎋ → Esc, 英数 → 無変換, かな → 変換, and so on.
-The mapping is *shortcut-equivalent*: when you press ⌘C on the Mac, Windows users in
-your audience see Ctrl+C — the shortcut they should press. (If ⌃ and ⌘ are held
-together, the duplicate Ctrl is shown only once.)
-
 ### Display lifecycle
 
 1. A key stays on screen while it is held down
@@ -188,6 +168,26 @@ Edit Display Mode from the menu again.
 ## 5. Settings Reference
 
 Open **Settings…** from the menu bar.
+
+### Key Labels
+
+| Setting | Description |
+|---|---|
+| Label Style | **Mac**: ⌘ ⌥ ↩ symbols / **Windows**: Ctrl, Alt, Enter… / **Mac + Windows**: combined like "⌘/Ctrl" |
+| Show 英数/かな as ABC/あいう | Matches the key legends on newer JIS keyboards |
+| Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
+| Show the symbol ⌥ produces | An ⌥ combination typed mid-sentence always joins the row as the symbol itself (Ω), regardless of this setting. Pressed on its own, it reads "⌥Z" with this off and "⌥Z → Ω" with it on. Accent marks (dead keys) appear as the mark itself |
+| Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
+| Add 🌐 to input-switch keys | Marks the 英数/かな (ABC/あいう) keys with a globe so they are not mistaken for typed letters |
+| Show kana input as hiragana (JIS kana layout) | **For kana-input users.** While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols. Leave off if you use romaji input |
+| Separate keys with "+" | Shows combinations like Ctrl+Shift+S |
+| Distinguish upper/lower case letters | When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). When off (default), letters are always uppercase |
+
+**Windows label mapping:** ⌘/⌃ → Ctrl, ⌥ → Alt, ⇧ → Shift, ↩ → Enter,
+⌫ → BackSpace, ⌦ → Delete, ⎋ → Esc, 英数 → 無変換, かな → 変換, and so on.
+The mapping is *shortcut-equivalent*: when you press ⌘C on the Mac, Windows users in
+your audience see Ctrl+C — the shortcut they should press. (If ⌃ and ⌘ are held
+together, the duplicate Ctrl is shown only once.)
 
 ### Display
 
