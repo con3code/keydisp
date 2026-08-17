@@ -279,6 +279,27 @@ final class KeyCaptureController {
         return true
     }
 
+    /// 直前に残った「fn」単独の行を取り除く（🌐 キーの二重表示防止）。
+    /// fn を修飾キーとして使った行（fn+← など）は単独行ではないので影響しない
+    private func removeTrailingLoneFnRow() {
+        let fnLabel = KeyFormatter.localized("fn")
+        guard let last = model.entries.last, !last.isTyping, last.tokens == [fnLabel] else { return }
+        if currentID == last.id {
+            currentID = nil
+            currentIsModifierOnly = false
+        }
+        model.remove(id: last.id)
+        // fn 行は無かったことにするので、連打まとめ（×n）の照合先も
+        // 1 つ前の行へ戻す（🌐 連打が 1 行にまとまるように）
+        if let prev = model.entries.last, !prev.isTyping {
+            lastComboID = prev.id
+            lastComboTokens = prev.tokens
+        } else {
+            lastComboID = nil
+            lastComboTokens = nil
+        }
+    }
+
     // MARK: - 取り残された表示の回収
 
     /// いま「押されている」として扱っている行。これ以外に押しっぱなしの行があってはならない。
@@ -494,6 +515,12 @@ final class KeyCaptureController {
             return
         } else {
             // コンボ（修飾キー付き、または特殊キー単独）
+            // 🌐 キー（fn 単独押し）は「fn の変化」と「コード 179 の keyDown」が別々に届く。
+            // fn を先に離した順序だと fn 単独行が先に残ってしまうので、
+            // 🌐 を表示する前に取り除いて 1 打鍵 = 1 行にする
+            if code == 179 {
+                removeTrailingLoneFnRow()
+            }
             var tokens = KeyFormatter.modifierTokens(flags, keyCode: code, pressOrder: modifierPressOrder)
                 + [KeyFormatter.keyLabel(code, shifted: false)]
             // ⌥ と組み合わせて入力される記号を併記する（⌥E → ´）
