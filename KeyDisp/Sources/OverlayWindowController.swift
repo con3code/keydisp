@@ -141,6 +141,8 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     // MARK: - ドラッグ中のフェード一時停止
 
     private var dragEndWatcher: Timer?
+    /// ドラッグ開始時にオーバーレイがあった画面（またぎ検出用）
+    private var dragStartScreenKey: String?
     /// スマートガイド（編集モードのドラッグ中に画面中心へ吸着したとき表示）
     private var guidePanel: NSPanel?
     private var guideHosting: NSHostingView<CenterGuideView>?
@@ -152,6 +154,10 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     /// 届かないことがあるため、終了はボタンの実状態を監視して検出する
     private func beginDragFreeze() {
         guard dragEndWatcher == nil else { return }
+        let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+        if let screen = panel.screen ?? screenContaining(center) {
+            dragStartScreenKey = Self.screenKey(screen)
+        }
         model.setFreeze(.dragging, true)
         dragEndWatcher = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
             guard NSEvent.pressedMouseButtons & 1 == 0 else { return }
@@ -160,6 +166,17 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             self.dragEndWatcher = nil
             self.model.setFreeze(.dragging, false)
             self.hideGuides()
+            // ドラッグ中は画面別の保存を保留しているので、離した位置をここで確定する
+            self.saveFrame()
+            // 画面をまたいでドラッグした場合は、移動先の画面のプロファイルへ切り替える
+            // （元画面の見た目を引き連れたまま保存して、移動先の設定を上書きしないため）
+            let center = CGPoint(x: self.panel.frame.midX, y: self.panel.frame.midY)
+            if self.settings.followCursorScreen,
+               let screen = self.panel.screen ?? self.screenContaining(center),
+               let key = Self.screenKey(screen), key != self.dragStartScreenKey {
+                self.adoptProfile(of: screen)
+            }
+            self.dragStartScreenKey = nil
         }
     }
 
@@ -191,10 +208,14 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         saveFrame()
         // その画面で記憶している表示設定一式があれば適用する。
         // 必ずフレームを移した後に行う（先に変えると、記憶が移動前の画面に上書きされる）
-        if let profile = storedProfile(for: target) {
+        adoptProfile(of: target)
+    }
+
+    /// 指定した画面のプロファイルへ切り替える（無ければ「表示する」を既定とする）
+    private func adoptProfile(of screen: NSScreen) {
+        if let profile = storedProfile(for: screen) {
             applyProfile(profile)
         } else if settings.hiddenOnCurrentScreen {
-            // 記憶のない画面は「表示する」が既定
             isApplyingProfile = true
             settings.hiddenOnCurrentScreen = false
             isApplyingProfile = false
@@ -439,6 +460,9 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
 
     private func saveFrame() {
         UserDefaults.standard.set(NSStringFromRect(panel.frame), forKey: Self.frameKey)
+        // ドラッグ中は画面別の記憶を更新しない。画面をまたぐ途中の位置が
+        // 元の画面の定位置を上書きしてしまうため、確定はドラッグ終了時に行う
+        guard dragEndWatcher == nil else { return }
         // いまいる画面の定位置としても記憶する（カーソル追従で戻ってきたときに使う）
         let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
         if let screen = panel.screen ?? screenContaining(center), let key = Self.screenKey(screen) {
