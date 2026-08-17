@@ -13,7 +13,7 @@ struct PermissionGuideView: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(nsImage: NSApp.applicationIconImage)
+            Image(nsImage: NSImage(named: "AppIcon") ?? NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 72, height: 72)
 

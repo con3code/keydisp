@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct AboutView: View {
@@ -11,7 +12,7 @@ struct AboutView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            Image(nsImage: NSApp.applicationIconImage)
+            Image(nsImage: NSImage(named: "AppIcon") ?? NSApp.applicationIconImage)
                 .resizable()
                 .frame(width: 96, height: 96)
             Text("KeyDisp")
