@@ -121,6 +121,7 @@ final class AppSettings: ObservableObject {
     /// 画面上端にカーソルを置いている間は履歴を消さない（フェードを止める）
     @Published var topEdgeFreeze: Bool { didSet { d.set(topEdgeFreeze, forKey: "topEdgeFreeze") } }
     @Published var dragToMove: Bool { didSet { d.set(dragToMove, forKey: "dragToMove") } }
+    @Published var typingAnimation: Bool { didSet { d.set(typingAnimation, forKey: "typingAnimation") } }
 
     // MARK: デザイン
     @Published var style: KeyStyle { didSet { d.set(style.rawValue, forKey: "keyStyle") } }
@@ -202,6 +203,7 @@ final class AppSettings: ObservableObject {
         holdJudgeDelay = d.object(forKey: "holdJudgeDelay") as? Double ?? 0.5
         topEdgeFreeze = d.object(forKey: "topEdgeFreeze") as? Bool ?? false
         dragToMove = d.object(forKey: "dragToMove") as? Bool ?? false
+        typingAnimation = d.object(forKey: "typingAnimation") as? Bool ?? true
         style = KeyStyle(rawValue: d.object(forKey: "keyStyle") as? Int ?? 1) ?? .keycap
         rowAlignment = RowAlignment(rawValue: d.object(forKey: "rowAlignment") as? Int ?? 0) ?? .left
         textColorHex = d.object(forKey: "textColorHex") as? String ?? "#FFFFFF"

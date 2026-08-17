@@ -127,6 +127,11 @@ struct SettingsView: View {
                 sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
                 sliderRow(L("表示の持続時間", "Hold Duration"), value: $settings.holdDuration, in: 0...5, format: L("%.1f 秒", "%.1f s"))
                 sliderRow(L("フェードアウトの長さ", "Fade-out Duration"), value: $settings.fadeDuration, in: 0.1...4, format: L("%.1f 秒", "%.1f s"))
+                Toggle(L("文字の追記をアニメーションする", "Animate typing growth"), isOn: $settings.typingAnimation)
+                Text(L("タイピングで行が伸びるときの動きを滑らかにします。カスタム画像スタイルでは背景が文字より一瞬遅れて追従して見えることがあるため、気になる場合はオフにしてください。",
+                       "Smoothly animates rows growing as you type. In the custom image style the backdrop can appear to lag a beat behind the text — turn this off if that bothers you."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 sliderRow(L("表示の行数", "Display Rows"), value: $settings.maxRows, in: 1...8, step: 1, format: L("%.0f 行", "%.0f"))
                 Toggle(L("新しい入力を上に表示（ぶら下がり式）", "Show newest at the top (hang-down style)"), isOn: $settings.stackFromTop)
                 Text(L("オフのときは下端を基準に新しい行が下に入り、古い行が上へ積み上がります。オンにすると上端が基準になり、新しい行が上に入って古い行が下へ押し下げられます。",

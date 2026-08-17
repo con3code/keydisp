@@ -291,11 +291,16 @@ struct OverlayRootView: View {
                 VStack(alignment: settings.rowAlignment.horizontal, spacing: 8 * settings.displayScale) {
                     ForEach(settings.stackFromTop ? shown.reversed() : shown) { entry in
                         KeyEntryRow(entry: entry, settings: settings, maxWidth: rowMaxWidth)
-                            // 行の中身（文字の追記）はアニメーションさせない。
-                            // 幅の変化を補間すると、即座に確定する文字だけが先に出て
-                            // 背景（特にカスタム画像の九分割）が後から追いかけて見えるため。
+                            // 文字の追記のアニメーションは設定で切り替える。
+                            // 補間中は即座に確定する文字だけが先に出て、背景
+                            // （特にカスタム画像の九分割）が後から追いかけて見えるため、
+                            // 気になる場合はオフ（即時確定）にできる。
                             // 行の出入りや積み上がりの動きは外側のアニメーションが担う
-                            .animation(nil, value: entry.tokens)
+                            .animation(
+                                settings.typingAnimation
+                                    ? .spring(response: 0.28, dampingFraction: 0.85) : nil,
+                                value: entry.tokens
+                            )
                             .opacity(entry.phase == .fading ? 0 : 1)
                             .animation(.easeOut(duration: settings.fadeDuration), value: entry.phase)
                             .transition(.asymmetric(

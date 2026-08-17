@@ -177,6 +177,7 @@ Open **Settings…** from the menu bar. Settings are organized into a sidebar on
 | Size | Scale of the key display (×0.5–×5.0) |
 | Hold Duration | How long a row remains after release (0–5 s) |
 | Fade-out Duration | How long the fade takes (0.1–4 s) |
+| Animate typing growth | Smoothly animates rows growing as you type (default on). Turn off if the custom-image backdrop appears to lag behind the text |
 | Display Rows | Maximum simultaneous rows (1–8) |
 | Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
 | Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
