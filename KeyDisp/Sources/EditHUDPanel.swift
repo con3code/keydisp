@@ -9,7 +9,6 @@ final class EditHUDPanelController: NSObject, NSWindowDelegate {
 
     let panel: NSPanel
     private let onDone: () -> Void
-    private var positioned = false
 
     init(settings: AppSettings, onDone: @escaping () -> Void) {
         self.onDone = onDone
@@ -43,17 +42,19 @@ final class EditHUDPanelController: NSObject, NSWindowDelegate {
 
     func show() {
         updateTitle()
-        if !positioned {
-            // 保存された位置が無ければメイン画面の右上に出す
-            if UserDefaults.standard.string(forKey: "NSWindow Frame \(Self.autosaveName)") == nil,
-               let screen = NSScreen.main {
-                let v = screen.visibleFrame
+        // メニューを操作した画面（= カーソルのある画面）に出す。
+        // その画面内で以前動かした位置ならそのまま尊重し、
+        // 別の画面で開いた場合はその画面の右上に出し直す
+        let loc = NSEvent.mouseLocation
+        if let target = NSScreen.screens.first(where: { $0.frame.contains(loc) }) ?? NSScreen.main {
+            let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+            if !target.frame.contains(center) {
+                let v = target.visibleFrame
                 panel.setFrameOrigin(NSPoint(
                     x: v.maxX - panel.frame.width - 24,
                     y: v.maxY - panel.frame.height - 24
                 ))
             }
-            positioned = true
         }
         panel.makeKeyAndOrderFront(nil)
     }

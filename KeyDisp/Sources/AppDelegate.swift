@@ -386,6 +386,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func setEditMode(_ editing: Bool) {
+        if editing, settings.followCursorScreen {
+            // メニューを操作した画面（カーソルのある画面）の配置を編集できるよう、
+            // 編集を始める前にオーバーレイをその画面へ移しておく
+            overlay.moveToCursorScreen()
+        }
         settings.editMode = editing
         overlay.setEditMode(editing)
         if editing {

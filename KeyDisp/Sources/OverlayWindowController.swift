@@ -141,10 +141,16 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     // MARK: - カーソルのある画面への追従
 
     /// カーソルのある画面へ表示を移す（オプションがオンのとき）。
-    /// その画面で記憶している定位置があればそこへ、無ければ相対位置を比例変換して置く。
     /// 編集モード中とドラッグ中は動かさない
     private func moveToCursorScreenIfNeeded() {
         guard settings.followCursorScreen, !settings.editMode, dragEndWatcher == nil else { return }
+        moveToCursorScreen()
+    }
+
+    /// カーソルのある画面へ表示を移す。
+    /// その画面で記憶している定位置・表示倍率があれば復元し、無ければ相対位置を比例変換して置く。
+    /// 表示編集モードに入るときにも（メニューを操作した画面を編集できるよう）呼ばれる
+    func moveToCursorScreen() {
         let loc = NSEvent.mouseLocation
         guard let target = NSScreen.screens.first(where: { $0.frame.contains(loc) }) else { return }
         let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)

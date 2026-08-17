@@ -141,7 +141,9 @@ instead of adding new rows (on by default).
 ## 4. Edit Display Mode
 
 Choose **Edit Display Mode** from the menu bar to adjust the display while
-watching a live preview.
+watching a live preview. The HUD panel opens on the screen where you used the
+menu, and with "Show on the screen with the cursor" enabled the overlay moves
+there first — so you always edit the screen you are looking at.
 
 ### What you can do
 
