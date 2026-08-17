@@ -427,6 +427,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     @objc private func showSettingsAction() { showSettings() }
 
     private func showSettings() {
+        if settings.followCursorScreen {
+            // 開いた画面のプロファイル（色・スタイルなど）が設定画面に映るよう、
+            // 編集モードと同じくオーバーレイを先にこの画面へ切り替えておく。
+            // これにより設定画面での変更も、この画面のプロファイルとして保存される
+            overlay.moveToCursorScreen()
+        }
         if settingsWindow == nil {
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(settings: settings)))
             window.styleMask = [.titled, .closable, .miniaturizable]
