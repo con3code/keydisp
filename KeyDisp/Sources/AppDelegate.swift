@@ -359,6 +359,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     /// ウィンドウを「現在マウスカーソルがある画面」の中央に配置する。
     /// マルチディスプレイでも、操作中の画面の中央あたりに初回表示されるようにする。
+    /// ウィンドウがカーソルのある画面（= メニューを操作した画面）に無ければ、
+    /// その画面の中央へ出し直す。同じ画面内で以前動かした位置はそのまま尊重する
+    private func bringToCursorScreen(_ window: NSWindow) {
+        let loc = NSEvent.mouseLocation
+        guard let target = NSScreen.screens.first(where: { $0.frame.contains(loc) }) else { return }
+        let center = CGPoint(x: window.frame.midX, y: window.frame.midY)
+        guard !target.frame.contains(center) else { return }
+        centerOnMouseScreen(window)
+    }
+
     private func centerOnMouseScreen(_ window: NSWindow) {
         let loc = NSEvent.mouseLocation
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(loc) }) ?? NSScreen.main else { return }
@@ -428,6 +438,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             settingsWindow = window
         }
         settingsWindow?.title = L("KeyDisp 設定", "KeyDisp Settings")
+        if let w = settingsWindow { bringToCursorScreen(w) }
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -467,6 +478,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             centerOnMouseScreen(window)
         }
         guideWindow?.title = L("KeyDisp の初期設定", "KeyDisp Setup")
+        if let w = guideWindow { bringToCursorScreen(w) }
         guideWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
