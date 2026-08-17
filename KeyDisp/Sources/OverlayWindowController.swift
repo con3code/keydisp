@@ -8,6 +8,8 @@ import SwiftUI
 /// 編集モード中は枠の内側ドラッグで移動、枠の端ドラッグで矩形を直接リサイズできる。
 final class OverlayWindowController: NSObject, NSWindowDelegate {
     private static let frameKey = "OverlayWindowFrame"
+    /// カーソル追従用: 画面（ディスプレイ UUID）ごとの定位置
+    private static let framesByScreenKey = "OverlayFrameByScreen"
     static let defaultSize = NSSize(width: 620, height: 440)
 
     let panel: NSPanel
@@ -16,6 +18,8 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     private var cancellables: Set<AnyCancellable> = []
     /// 外側（メニュー・ホットエッジなど）から求められている表示状態
     private var wantsVisible = false
+    /// 行が「増えた」ことを検知するための直前の行数（カーソル追従の切替契機）
+    private var lastEntryCount = 0
 
     init(model: KeyDisplayModel, settings: AppSettings = .shared) {
         self.model = model
@@ -64,12 +68,17 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         .store(in: &cancellables)
 
         // 行がすべて消えたら、透明なウィンドウを画面に載せたままにせず完全に下ろす
-        // （描画合成の対象から外れる）。新しい行が入ったら再び載せる
+        // （描画合成の対象から外れる）。新しい行が入ったら再び載せる。
+        // カーソル追従はタイマーで追わず、行が増えるこのタイミングに便乗する
         model.$entries
-            .map(\.isEmpty)
-            .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.refreshVisibility() }
+            .sink { [weak self] entries in
+                guard let self else { return }
+                let added = entries.count > self.lastEntryCount
+                self.lastEntryCount = entries.count
+                if added { self.moveToCursorScreenIfNeeded() }
+                self.refreshVisibility()
+            }
             .store(in: &cancellables)
         settings.$editMode
             .removeDuplicates()
@@ -116,6 +125,71 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             self.dragEndWatcher = nil
             self.model.setFreeze(.dragging, false)
         }
+    }
+
+    // MARK: - カーソルのある画面への追従
+
+    /// カーソルのある画面へ表示を移す（オプションがオンのとき）。
+    /// その画面で記憶している定位置があればそこへ、無ければ相対位置を比例変換して置く。
+    /// 編集モード中とドラッグ中は動かさない
+    private func moveToCursorScreenIfNeeded() {
+        guard settings.followCursorScreen, !settings.editMode, dragEndWatcher == nil else { return }
+        let loc = NSEvent.mouseLocation
+        guard let target = NSScreen.screens.first(where: { $0.frame.contains(loc) }) else { return }
+        let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+        if target.frame.contains(center) { return }  // すでにその画面にいる
+
+        let frame = storedFrame(for: target) ?? Self.remap(
+            panel.frame,
+            from: (screenContaining(center) ?? target).visibleFrame,
+            to: target.visibleFrame
+        )
+        panel.setFrame(clamp(frame, to: target), display: true)
+        publishContentWidth()
+        saveFrame()
+    }
+
+    /// その画面で記憶している定位置（画面内に収まっているもののみ）
+    private func storedFrame(for screen: NSScreen) -> NSRect? {
+        guard let key = Self.screenKey(screen),
+              let dict = UserDefaults.standard.dictionary(forKey: Self.framesByScreenKey) as? [String: String],
+              let str = dict[key] else { return nil }
+        let rect = NSRectFromString(str)
+        guard !rect.isEmpty, screen.frame.intersects(rect) else { return nil }
+        return rect
+    }
+
+    /// 元の画面内での相対位置（余白に対する比率）を保ったまま、別の画面へ写像する
+    static func remap(_ frame: NSRect, from source: NSRect, to target: NSRect) -> NSRect {
+        var f = frame
+        let rx = source.width > frame.width
+            ? (frame.minX - source.minX) / (source.width - frame.width) : 0
+        let ry = source.height > frame.height
+            ? (frame.minY - source.minY) / (source.height - frame.height) : 0
+        f.origin.x = target.minX + max(0, min(1, rx)) * max(0, target.width - frame.width)
+        f.origin.y = target.minY + max(0, min(1, ry)) * max(0, target.height - frame.height)
+        return f
+    }
+
+    private func clamp(_ frame: NSRect, to screen: NSScreen) -> NSRect {
+        var f = frame
+        let v = screen.visibleFrame
+        f.size.width = min(f.width, v.width)
+        f.size.height = min(f.height, v.height)
+        f.origin.x = max(v.minX, min(f.origin.x, v.maxX - f.width))
+        f.origin.y = max(v.minY, min(f.origin.y, v.maxY - f.height))
+        return f
+    }
+
+    private func screenContaining(_ point: CGPoint) -> NSScreen? {
+        NSScreen.screens.first { $0.frame.contains(point) }
+    }
+
+    /// ディスプレイ固有の識別子。プロジェクタを抜き差ししても記憶が残るよう UUID を使う
+    private static func screenKey(_ screen: NSScreen) -> String? {
+        guard let num = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID,
+              let uuid = CGDisplayCreateUUIDFromDisplayID(num)?.takeRetainedValue() else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String
     }
 
     /// 表示すべき内容があるときだけウィンドウを画面に載せる。
@@ -193,6 +267,8 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     /// 位置とサイズをメインスクリーン左下のデフォルト状態へ戻す。
     /// サイズは現在の表示倍率を考慮して決める（大きな倍率でも表示が収まるように）。
     func resetPosition() {
+        // 画面ごとの定位置の記憶もすべてクリアして、まっさらな既定状態へ戻す
+        UserDefaults.standard.removeObject(forKey: Self.framesByScreenKey)
         guard let screen = NSScreen.main else { return }
         let v = screen.visibleFrame
         let scale = max(1, settings.displayScale)
@@ -227,6 +303,13 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
 
     private func saveFrame() {
         UserDefaults.standard.set(NSStringFromRect(panel.frame), forKey: Self.frameKey)
+        // いまいる画面の定位置としても記憶する（カーソル追従で戻ってきたときに使う）
+        let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+        if let screen = panel.screen ?? screenContaining(center), let key = Self.screenKey(screen) {
+            var dict = UserDefaults.standard.dictionary(forKey: Self.framesByScreenKey) as? [String: String] ?? [:]
+            dict[key] = NSStringFromRect(panel.frame)
+            UserDefaults.standard.set(dict, forKey: Self.framesByScreenKey)
+        }
     }
 
     func windowDidMove(_ notification: Notification) {

@@ -181,6 +181,7 @@ Open **Settings…** from the menu bar. Settings are organized into a sidebar on
 | Display Rows | Maximum simultaneous rows (1–8) |
 | Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
 | Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
+| Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position and size are remembered per screen; "Reset Position & Size" clears the memory for all screens |
 | Drag the key display to move it | When on, grab the keys on screen to move the display area. The fade-out pauses while dragging. Clicks directly on the keys no longer reach the app beneath (empty areas click through) |
 | Hide key display while the cursor is at the bottom edge | Hot-edge feature: while the cursor stays within 10 px of the bottom edge of any screen, the display is hidden and input during that time is not shown |
 
