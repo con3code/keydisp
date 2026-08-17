@@ -21,6 +21,11 @@ final class KeyCaptureController {
     private var modifierPeak: CGEventFlags = []
     /// 修飾キーが減ったときの処理を、押し続けるか確かめるまで保留しておくもの
     private var modifierShrinkWork: DispatchWorkItem?
+    /// fn 単独押下の表示の保留。🌐 キーは fn の変化の直後にコード 179 が届くため、
+    /// fn 行をすぐ出すと一瞬見えてから 🌐 に置き替わってしまう。
+    /// この時間だけ表示を待ち、179 が届いたら fn 行を出さずに済ませる
+    private var pendingLoneFnWork: DispatchWorkItem?
+    private let loneFnDisplayDelay: TimeInterval = 0.12
     /// 修飾キーを押した順（押下順表示オプション用）
     private var modifierPressOrder: [CGEventFlags] = []
     /// この時間だけ押し続けたら「意図して押している」とみなす。
@@ -144,6 +149,7 @@ final class KeyCaptureController {
         modifierPeak = []
         modifierPressOrder = []
         cancelModifierShrink()
+        cancelPendingLoneFn()
         suppressModifierEntry = false
         lastTypingID = nil
         mouseEntryID = nil
@@ -157,6 +163,55 @@ final class KeyCaptureController {
     private func cancelModifierShrink() {
         modifierShrinkWork?.cancel()
         modifierShrinkWork = nil
+    }
+
+    // MARK: - fn 単独表示の保留（🌐 キーの一瞬の「fn」を出さないため）
+
+    private func cancelPendingLoneFn() {
+        pendingLoneFnWork?.cancel()
+        pendingLoneFnWork = nil
+    }
+
+    /// fn 単独の表示を少しだけ保留する。時間内に 179（🌐）が届けば表示しない
+    private func armPendingLoneFn() {
+        cancelPendingLoneFn()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.pendingLoneFnWork = nil
+            self.showLoneFnRow()
+        }
+        pendingLoneFnWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + loneFnDisplayDelay, execute: work)
+    }
+
+    /// 保留していた fn 単独行を実際に表示する（179 が来なかった場合）。
+    /// 保留中に fn を離していたら、出してすぐ離した扱いにして通常のフェードに乗せる
+    private func showLoneFnRow() {
+        let tokens = [KeyFormatter.localized("fn")]
+        let stillHeld = currentModifiers.contains(.maskSecondaryFn)
+        if let target = mergeTargetID(for: tokens) {
+            model.increment(id: target)
+            if stillHeld {
+                modifierPeak = .maskSecondaryFn
+                currentID = target
+                currentIsModifierOnly = true
+            } else {
+                model.release(id: target)
+                lastComboID = target
+                lastComboTokens = tokens
+            }
+            return
+        }
+        let id = model.begin(tokens: tokens, isTyping: false)
+        if stillHeld {
+            currentID = id
+            currentIsModifierOnly = true
+            lastTypingID = nil
+        } else {
+            model.release(id: id)
+            lastComboID = id
+            lastComboTokens = tokens
+        }
     }
 
     /// いま実際に押されているキーだけでトークン列を作る。
@@ -413,6 +468,9 @@ final class KeyCaptureController {
         pressedKeys.insert(code)
         // 文字キーが押されたなら修飾キー行はコンビネーションへ変わるので、保留中の処理は破棄する
         cancelModifierShrink()
+        // fn 単独表示の保留も解決する。179（🌐）ならそもそも fn 行は出さず、
+        // 他のキーならコンボ側の表示（fn+← など）に任せる
+        cancelPendingLoneFn()
 
         let flags = KeyFormatter.relevantFlags(event.flags)
         // 矢印やファンクションキーには fn が暗黙に付くので、押している修飾キーとしては数えない。
@@ -698,6 +756,11 @@ final class KeyCaptureController {
         // 修飾キーの状態が動いたので、保留していた処理はいったん取り消す
         // （必要ならこの後 armRowNarrow で組み直す）
         cancelModifierShrink()
+        // fn 単独の保留中に別の修飾キーが加わったら、保留をやめて通常の表示に任せる。
+        // fn を離しただけ（flags が空）の場合は、この後 179 が届くかもしれないので保留を続ける
+        if pendingLoneFnWork != nil, !flags.isEmpty, flags != .maskSecondaryFn {
+            cancelPendingLoneFn()
+        }
 
         // Caps Lock はトグルなので一瞬だけ表示（連打は ×n にまとめる）
         if code == 57 {
@@ -760,6 +823,11 @@ final class KeyCaptureController {
                    let tid = lastTypingID,
                    now - lastTypingTime < typingAppendWindow,
                    model.phase(of: tid) != nil {
+                    return
+                }
+                // fn 単独は表示を少し保留する（直後に 🌐 の 179 が届く場合があるため）
+                if flags == .maskSecondaryFn {
+                    armPendingLoneFn()
                     return
                 }
                 let tokens = KeyFormatter.modifierTokens(flags, pressOrder: modifierPressOrder)
