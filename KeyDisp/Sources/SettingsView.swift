@@ -129,6 +129,10 @@ struct SettingsView: View {
                 sliderRow(L("フェードアウトの長さ", "Fade-out Duration"), value: $settings.fadeDuration, in: 0.1...4, format: L("%.1f 秒", "%.1f s"))
                 sliderRow(L("表示の行数", "Display Rows"), value: $settings.maxRows, in: 1...8, step: 1, format: L("%.0f 行", "%.0f"))
                 Toggle(L("新しい入力を上に表示（ぶら下がり式）", "Show newest at the top (hang-down style)"), isOn: $settings.stackFromTop)
+                Text(L("オフのときは下端を基準に新しい行が下に入り、古い行が上へ積み上がります。オンにすると上端が基準になり、新しい行が上に入って古い行が下へ押し下げられます。",
+                       "When off, rows stack upward from the bottom edge (newest at the bottom). When on, rows hang from the top edge (newest at the top, older rows pushed down)."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Picker(L("行の揃え", "Row Alignment"), selection: $settings.rowAlignment) {
                     ForEach(RowAlignment.allCases) { a in
                         Text(a.label).tag(a)
@@ -136,10 +140,6 @@ struct SettingsView: View {
                 }
                 Text(L("行を伸ばす方向です。オーバーレイを画面の右側に置くときは「右揃え」にすると自然になります。",
                        "Which way rows grow. Choose Right when the overlay sits on the right side of the screen."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(L("オフのときは下端を基準に新しい行が下に入り、古い行が上へ積み上がります。オンにすると上端が基準になり、新しい行が上に入って古い行が下へ押し下げられます。",
-                       "When off, rows stack upward from the bottom edge (newest at the bottom). When on, rows hang from the top edge (newest at the top, older rows pushed down)."))
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Text(L("表示領域の位置と大きさは、メニューバーの「表示編集モード」でドラッグして変更できます。",
