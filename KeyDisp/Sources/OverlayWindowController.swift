@@ -141,6 +141,11 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     // MARK: - ドラッグ中のフェード一時停止
 
     private var dragEndWatcher: Timer?
+    /// スマートガイド（編集モードのドラッグ中に画面中心へ吸着したとき表示）
+    private var guidePanel: NSPanel?
+    private var guideHosting: NSHostingView<CenterGuideView>?
+    /// 吸着による setFrameOrigin が windowDidMove を再入させたときのガード
+    private var isSnapping = false
 
     /// ドラッグ / リサイズ中は表示を凍結する。
     /// ウィンドウの移動ループは WindowServer 側で進み mouseUp がアプリに
@@ -154,6 +159,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             guard let self else { return }
             self.dragEndWatcher = nil
             self.model.setFreeze(.dragging, false)
+            self.hideGuides()
         }
     }
 
@@ -389,6 +395,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     func setEditMode(_ editing: Bool) {
         refreshMouseAcceptance()
         refreshVisibility()
+        if !editing { hideGuides() }
     }
 
     /// 位置とサイズをメインスクリーン左下のデフォルト状態へ戻す。
@@ -442,7 +449,72 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     }
 
     func windowDidMove(_ notification: Notification) {
+        snapToScreenCenterIfNeeded()
         saveFrame()
+    }
+
+    // MARK: - スマートガイド（編集モードのドラッグ中、画面中心へ吸着）
+
+    private func snapToScreenCenterIfNeeded() {
+        if isSnapping { return }
+        guard settings.editMode, dragEndWatcher != nil else {
+            hideGuides()
+            return
+        }
+        let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+        guard let screen = screenContaining(center) ?? panel.screen else {
+            hideGuides()
+            return
+        }
+        let target = CGPoint(x: screen.frame.midX, y: screen.frame.midY)
+        let threshold: CGFloat = 10
+        var origin = panel.frame.origin
+        let snapV = abs(center.x - target.x) <= threshold
+        let snapH = abs(center.y - target.y) <= threshold
+        if snapV { origin.x = target.x - panel.frame.width / 2 }
+        if snapH { origin.y = target.y - panel.frame.height / 2 }
+        if (snapV || snapH), origin != panel.frame.origin {
+            isSnapping = true
+            panel.setFrameOrigin(origin)
+            isSnapping = false
+        }
+        updateGuides(screen: screen, vertical: snapV, horizontal: snapH)
+    }
+
+    private func updateGuides(screen: NSScreen, vertical: Bool, horizontal: Bool) {
+        guard vertical || horizontal else {
+            hideGuides()
+            return
+        }
+        if guidePanel == nil {
+            let p = NSPanel(
+                contentRect: .zero,
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: false
+            )
+            p.isOpaque = false
+            p.backgroundColor = .clear
+            p.hasShadow = false
+            p.ignoresMouseEvents = true
+            p.hidesOnDeactivate = false
+            p.isFloatingPanel = true
+            // オーバーレイ (.statusBar) より上、編集 HUD と同じ段
+            p.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+            p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+            p.animationBehavior = .none
+            let h = NSHostingView(rootView: CenterGuideView(vertical: false, horizontal: false))
+            p.contentView = h
+            guideHosting = h
+            guidePanel = p
+        }
+        guidePanel?.setFrame(screen.frame, display: false)
+        guideHosting?.rootView = CenterGuideView(vertical: vertical, horizontal: horizontal)
+        guidePanel?.orderFrontRegardless()
+    }
+
+    private func hideGuides() {
+        guidePanel?.orderOut(nil)
     }
 
     func windowWillMove(_ notification: Notification) {
@@ -456,5 +528,36 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     func windowDidResize(_ notification: Notification) {
         publishContentWidth()
         saveFrame()
+    }
+}
+
+
+/// 画面中心の点線ガイド。編集モードのドラッグで中心に吸着したときだけ表示される
+struct CenterGuideView: View {
+    var vertical: Bool
+    var horizontal: Bool
+
+    private let guideColor = Color(red: 1.0, green: 0.70, blue: 0.0)  // アプリのアクセント（アンバー）
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                if vertical {
+                    Path { p in
+                        p.move(to: CGPoint(x: geo.size.width / 2, y: 0))
+                        p.addLine(to: CGPoint(x: geo.size.width / 2, y: geo.size.height))
+                    }
+                    .stroke(guideColor, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                }
+                if horizontal {
+                    Path { p in
+                        p.move(to: CGPoint(x: 0, y: geo.size.height / 2))
+                        p.addLine(to: CGPoint(x: geo.size.width, y: geo.size.height / 2))
+                    }
+                    .stroke(guideColor, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                }
+            }
+        }
+        .allowsHitTesting(false)
     }
 }

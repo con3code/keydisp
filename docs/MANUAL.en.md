@@ -148,7 +148,9 @@ there first — so you always edit the screen you are looking at.
 ### What you can do
 
 - **Move** — drag inside the dashed frame to place the overlay anywhere,
-  including on another display. The position is remembered
+  including on another display. The position is remembered.
+  Near the middle of the screen, dashed guides appear and the overlay
+  snaps to the horizontal and vertical center lines
 - **Resize** — drag the **edges** of the dashed frame to change the display area
   directly. Row wrapping follows the new width
 - **HUD panel** — a floating "Edit Display Mode" panel (top-right of the screen)
