@@ -33,7 +33,13 @@ your audience needs to see exactly what you are pressing.
   text color, background color, and opacity are all adjustable
 - **Edit Display Mode** — a floating HUD lets you tune size, colors, rows, and style while
   watching a live preview
-- **Hot edge** — park the cursor at the bottom edge of the screen to temporarily hide the
+- **Multi-display aware** — the display follows the cursor's screen, and each screen
+  remembers its own position, look, and visibility (big on the audience screen,
+  hidden on your own)
+- **Media keys** — volume, playback and brightness keys appear with F1–F12 labels
+- **Text outline** — keeps floating text readable over bright content
+- **Hot edge** — park the cursor at the bottom edge of the screen to temporarily hide the Park the cursor
+  at the top edge to keep history from fading
   display (input is not shown while hidden)
 - **Global shortcut** — toggle the display with a customizable hotkey (default ⌥⌘K)
 - **English / Japanese UI** — follows the system language, or set it manually
