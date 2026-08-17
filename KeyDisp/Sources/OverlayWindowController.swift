@@ -104,13 +104,14 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             settings.$displayScale.map { _ in () }.eraseToAnyPublisher(),
             settings.$maxRows.map { _ in () }.eraseToAnyPublisher(),
             settings.$stackFromTop.map { _ in () }.eraseToAnyPublisher(),
+            settings.$rowAlignment.map { _ in () }.eraseToAnyPublisher(),
             settings.$textColorHex.map { _ in () }.eraseToAnyPublisher(),
             settings.$keyColorHex.map { _ in () }.eraseToAnyPublisher(),
             settings.$backgroundEnabled.map { _ in () }.eraseToAnyPublisher(),
             settings.$backgroundOpacity.map { _ in () }.eraseToAnyPublisher(),
             settings.$hiddenOnCurrentScreen.map { _ in () }.eraseToAnyPublisher()
         )
-        .dropFirst(9)  // 購読時に各設定が 1 回ずつ発火するぶんを読み飛ばす
+        .dropFirst(10)  // 購読時に各設定が 1 回ずつ発火するぶんを読み飛ばす
         .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
         .sink { [weak self] in self?.rememberProfile() }
         .store(in: &cancellables)
@@ -237,6 +238,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             "displayScale": settings.displayScale,
             "maxRows": settings.maxRows,
             "stackFromTop": settings.stackFromTop,
+            "rowAlignment": settings.rowAlignment.rawValue,
             "textColorHex": settings.textColorHex,
             "keyColorHex": settings.keyColorHex,
             "backgroundEnabled": settings.backgroundEnabled,
@@ -285,6 +287,9 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         }
         if let v = profile["stackFromTop"] as? Bool, v != settings.stackFromTop {
             settings.stackFromTop = v
+        }
+        if let v = profile["rowAlignment"] as? Int, let a = RowAlignment(rawValue: v), a != settings.rowAlignment {
+            settings.rowAlignment = a
         }
         if let v = profile["textColorHex"] as? String, v != settings.textColorHex {
             settings.textColorHex = v

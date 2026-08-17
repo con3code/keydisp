@@ -117,6 +117,19 @@ struct EditHUDView: View {
             Toggle(L("新しい入力を上に表示（ぶら下がり式）", "Newest at top (hang-down)"), isOn: $settings.stackFromTop)
                 .font(.system(size: 12))
 
+            HStack(spacing: 8) {
+                Text(L("行の揃え", "Align"))
+                    .font(.system(size: 12))
+                    .frame(width: 70, alignment: .leading)
+                Picker("", selection: $settings.rowAlignment) {
+                    ForEach(RowAlignment.allCases) { a in
+                        Text(a.label).tag(a)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+
             HStack(spacing: 16) {
                 ColorPicker(L("文字色", "Text"), selection: settings.colorBinding(\.textColorHex))
                 ColorPicker(L("背景色", "Key"), selection: settings.colorBinding(\.keyColorHex))
