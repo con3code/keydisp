@@ -165,17 +165,17 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Toggle(L("カーソルのある画面に表示する", "Show on the screen with the cursor"),
-                       isOn: $settings.followCursorScreen)
-                Text(L("マルチディスプレイで、キー表示がカーソルのある画面へ付いてきます。位置とサイズは画面ごとに記憶され、表示編集モードで動かした場所がその画面の定位置になります。画面の切り替わりは、新しいキー入力が表示される瞬間に行われます。",
-                       "On multi-display setups the key display follows the cursor's screen. Position and size are remembered per screen — wherever you place it in Edit Display Mode becomes that screen's home. Switching happens the moment a new key appears."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
                 Toggle(L("画面の下端にカーソルを置いている間はキー表示を隠す",
                          "Hide key display while the cursor is at the bottom edge of the screen"),
                        isOn: $settings.hotCornerHide)
                 Text(L("いずれかの画面の底辺（下端 10px 以内）にカーソルがある間だけ、キー表示を一時的に非表示にし、その間の新しいキー入力も表示しません。",
                        "Temporarily hides the key display while the cursor stays within 10 px of the bottom edge of any screen. New key input during that time is not shown either."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Toggle(L("カーソルのある画面に表示する", "Show on the screen with the cursor"),
+                       isOn: $settings.followCursorScreen)
+                Text(L("マルチディスプレイで、キー表示がカーソルのある画面へ付いてきます。位置とサイズは画面ごとに記憶され、表示編集モードで動かした場所がその画面の定位置になります。画面の切り替わりは、新しいキー入力が表示される瞬間に行われます。",
+                       "On multi-display setups the key display follows the cursor's screen. Position and size are remembered per screen — wherever you place it in Edit Display Mode becomes that screen's home. Switching happens the moment a new key appears."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
