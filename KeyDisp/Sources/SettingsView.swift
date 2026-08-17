@@ -102,22 +102,6 @@ struct SettingsView: View {
 
     @ViewBuilder private var displaySection: some View {
             Section {
-                Toggle(L("同じキーの連続入力を ×n でまとめる", "Group repeated keys as ×n"), isOn: $settings.countRepeats)
-                Text(L("同じコンビネーションの連続押しや長押し（キーリピート）を、新しい行を増やさず「⌘V ×3」のような回数表示にまとめます。",
-                       "Repeated presses or held key repeats of the same combination are shown as a count like \"⌘V ×3\" instead of new rows."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Toggle(L("修飾キーを離すたびに履歴を残す", "Keep a row each time a modifier is released"), isOn: $settings.stepModifierRelease)
-                Text(L("修飾キーの一部を離して残りを「区切りの判定時間」以上押し続けたときの動きが変わります。オンなら、そこまでの組み合わせを履歴として残し、押している組み合わせを新しい行に出します（⇧⌘ → ⇧）。オフなら行を増やさず、その行が押している組み合わせだけの表示に変わります。どちらもそれより早く離しきった場合は、押した組み合わせ全体が 1 行として残ります。",
-                       "Changes what happens when you release part of a combination and hold the rest for longer than the hold threshold. On: the combination so far stays as history and the keys still held start a new row (⇧⌘ → ⇧). Off: no row is added — the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination as one row."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                sliderRow(L("区切りの判定時間", "Hold Threshold"), value: $settings.holdJudgeDelay,
-                          in: 0.2...2.0, format: L("%.1f 秒", "%.1f s"))
-                Text(L("⇧⌘ のように複数のキーを押して片方だけ離したとき、残りをこの時間だけ押し続けると「意図して押している」と判断し、上の設定に従って表示が変わります。これより早く離しきった場合は、押した組み合わせ全体（⇧⌘）が 1 行として残ります。短くすると反応が早くなり、長くすると組み合わせがまとまりやすくなります。",
-                       "When you hold several keys — ⇧⌘, say — and let one go, keeping the rest down for this long counts as deliberate, and the display changes as the setting above describes. Release everything sooner and the whole combination (⇧⌘) stays as one row. Shorten it for a quicker reaction, lengthen it to keep combinations together."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
 
                 sliderRow(L("表示の持続時間", "Hold Duration"), value: $settings.holdDuration, in: 0...5, format: L("%.1f 秒", "%.1f s"))
                 sliderRow(L("フェードアウトの長さ", "Fade-out Duration"), value: $settings.fadeDuration, in: 0.1...4, format: L("%.1f 秒", "%.1f s"))
@@ -157,6 +141,17 @@ struct SettingsView: View {
                        "Temporarily hides the key display while the cursor stays within 10 px of the bottom edge of any screen. New key input during that time is not shown either."))
                     .font(.caption)
                     .foregroundColor(.secondary)
+                Toggle(L("修飾キーを離すたびに履歴を残す", "Keep a row each time a modifier is released"), isOn: $settings.stepModifierRelease)
+                Text(L("修飾キーの一部を離して残りを「区切りの判定時間」以上押し続けたときの動きが変わります。オンなら、そこまでの組み合わせを履歴として残し、押している組み合わせを新しい行に出します（⇧⌘ → ⇧）。オフなら行を増やさず、その行が押している組み合わせだけの表示に変わります。どちらもそれより早く離しきった場合は、押した組み合わせ全体が 1 行として残ります。",
+                       "Changes what happens when you release part of a combination and hold the rest for longer than the hold threshold. On: the combination so far stays as history and the keys still held start a new row (⇧⌘ → ⇧). Off: no row is added — the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination as one row."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                sliderRow(L("区切りの判定時間", "Hold Threshold"), value: $settings.holdJudgeDelay,
+                          in: 0.2...2.0, format: L("%.1f 秒", "%.1f s"))
+                Text(L("⇧⌘ のように複数のキーを押して片方だけ離したとき、残りをこの時間だけ押し続けると「意図して押している」と判断し、上の設定に従って表示が変わります。これより早く離しきった場合は、押した組み合わせ全体（⇧⌘）が 1 行として残ります。短くすると反応が早くなり、長くすると組み合わせがまとまりやすくなります。",
+                       "When you hold several keys — ⇧⌘, say — and let one go, keeping the rest down for this long counts as deliberate, and the display changes as the setting above describes. Release everything sooner and the whole combination (⇧⌘) stays as one row. Shorten it for a quicker reaction, lengthen it to keep combinations together."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
     }
 
@@ -170,6 +165,11 @@ struct SettingsView: View {
                 Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
                 Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
                        "When off, letters are always shown uppercase. When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). Combinations (⌘A etc.) always use uppercase."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Toggle(L("同じキーの連続入力を ×n でまとめる", "Group repeated keys as ×n"), isOn: $settings.countRepeats)
+                Text(L("同じコンビネーションの連続押しや長押し（キーリピート）を、新しい行を増やさず「⌘V ×3」のような回数表示にまとめます。",
+                       "Repeated presses or held key repeats of the same combination are shown as a count like \"⌘V ×3\" instead of new rows."))
                     .font(.caption)
                     .foregroundColor(.secondary)
 

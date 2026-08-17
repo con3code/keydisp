@@ -199,6 +199,7 @@ your own.
 |---|---|
 | Show all key input | When on, ordinary typing (letters/numbers) is displayed too. When off (default), only combinations and special keys are shown |
 | Distinguish upper/lower case letters | When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). When off (default), letters are always uppercase |
+| Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
 | Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
 | Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
 | Separate keys with "+" | Shows combinations like Ctrl+Shift+S |
@@ -218,9 +219,6 @@ together, the duplicate Ctrl is shown only once.)
 
 | Setting | Description |
 |---|---|
-| Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
-| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for longer than the Hold Threshold**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
-| Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
 | Hold Duration | How long a row remains after release (0–5 s) |
 | Fade-out Duration | How long the fade takes (0.1–4 s) |
 | Animate typing growth | Smoothly animates rows growing as you type (default on). Turn off if the custom-image backdrop appears to lag behind the text |
@@ -228,6 +226,8 @@ together, the duplicate Ctrl is shown only once.)
 | Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position, display area and the Edit Display Mode appearance settings (style, size, rows, colors, background) are remembered per screen; "Reset Position & Size" clears the memory for all screens |
 | Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
 | Hide key display while the cursor is at the bottom edge | Hot-edge feature: while the cursor stays within 10 px of the bottom edge of any screen, the display is hidden and input during that time is not shown |
+| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for longer than the Hold Threshold**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
+| Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
 
 ### Mouse
 
