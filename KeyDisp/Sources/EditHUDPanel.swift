@@ -57,6 +57,10 @@ final class EditHUDPanelController: NSObject, NSWindowDelegate {
             }
         }
         panel.makeKeyAndOrderFront(nil)
+        // 開いたままのカラーパネルがあれば、HUD と同じ画面へ連れてくる
+        if NSColorPanel.sharedColorPanelExists, NSColorPanel.shared.isVisible {
+            ColorPanelScreenFollower.bringToCursorScreen(NSColorPanel.shared)
+        }
     }
 
     func hide() {

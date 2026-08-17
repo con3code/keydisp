@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private lazy var capture = KeyCaptureController(model: model)
     private let mouseHighlight = MouseHighlightController()
     private let bigCursor = BigCursorController()
+    private let colorPanelFollower = ColorPanelScreenFollower()
     private var overlay: OverlayWindowController!
     private var editHUD: EditHUDPanelController?
 
@@ -51,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
 
         applyActivationPolicy()
+        colorPanelFollower.install()
         if settings.showMenuBarIcon { installStatusItem() }
         registerHotKey()
         bindSettings()
@@ -446,6 +448,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         settingsWindow?.title = L("KeyDisp 設定", "KeyDisp Settings")
         if let w = settingsWindow { bringToCursorScreen(w) }
         settingsWindow?.makeKeyAndOrderFront(nil)
+        // 開いたままのカラーパネルがあれば、設定画面と同じ画面へ連れてくる
+        if NSColorPanel.sharedColorPanelExists, NSColorPanel.shared.isVisible {
+            ColorPanelScreenFollower.bringToCursorScreen(NSColorPanel.shared)
+        }
         NSApp.activate(ignoringOtherApps: true)
     }
 
