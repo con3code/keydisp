@@ -170,45 +170,6 @@ Edit Display Mode from the menu again.
 
 Open **Settings…** from the menu bar. Settings are organized into a sidebar on the left; the headings below correspond to the sidebar items (Shortcut lives inside General). Version information lives under "About KeyDisp" in the sidebar.
 
-### Display
-
-| Setting | Description |
-|---|---|
-| Show all key input | When on, ordinary typing (letters/numbers) is displayed too. When off (default), only combinations and special keys are shown |
-| Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
-| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for longer than the Hold Threshold**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
-| Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
-| Hold Duration | How long a row remains after release (0–5 s) |
-| Fade-out Duration | How long the fade takes (0.1–4 s) |
-| Animate typing growth | Smoothly animates rows growing as you type (default on). Turn off if the custom-image backdrop appears to lag behind the text |
-| Display Rows | Maximum simultaneous rows (1–8) |
-| Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
-| Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
-| Drag the key display to move it | When on, grab the keys on screen to move the display area. The fade-out pauses while dragging. Clicks directly on the keys no longer reach the app beneath (empty areas click through) |
-| Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position, display area and the Edit Display Mode appearance settings (style, size, rows, colors, background) are remembered per screen; "Reset Position & Size" clears the memory for all screens |
-| Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
-| Hide key display while the cursor is at the bottom edge | Hot-edge feature: while the cursor stays within 10 px of the bottom edge of any screen, the display is hidden and input during that time is not shown |
-
-### Key Labels
-
-| Setting | Description |
-|---|---|
-| Distinguish upper/lower case letters | When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). When off (default), letters are always uppercase |
-| Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
-| Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
-| Separate keys with "+" | Shows combinations like Ctrl+Shift+S |
-| Label Style | **Mac**: ⌘ ⌥ ↩ symbols / **Windows**: Ctrl, Alt, Enter… / **Mac + Windows**: combined like "⌘/Ctrl" |
-| Show the symbol ⌥ produces | An ⌥ combination typed mid-sentence always joins the row as the symbol itself (Ω), regardless of this setting. Pressed on its own, it reads "⌥Z" with this off and "⌥Z → Ω" with it on. Accent marks (dead keys) appear as the mark itself |
-| Add 🌐 to input-switch keys | Marks the 英数/かな (ABC/あいう) keys with a globe so they are not mistaken for typed letters |
-| Show 英数/かな as ABC/あいう | Matches the key legends on newer JIS keyboards |
-| Show kana input as hiragana (JIS kana layout) | **For kana-input users.** While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols. Leave off if you use romaji input |
-
-**Windows label mapping:** ⌘/⌃ → Ctrl, ⌥ → Alt, ⇧ → Shift, ↩ → Enter,
-⌫ → BackSpace, ⌦ → Delete, ⎋ → Esc, 英数 → 無変換, かな → 変換, and so on.
-The mapping is *shortcut-equivalent*: when you press ⌘C on the Mac, Windows users in
-your audience see Ctrl+C — the shortcut they should press. (If ⌃ and ⌘ are held
-together, the duplicate Ctrl is shown only once.)
-
 ### Design
 
 | Setting | Description |
@@ -228,6 +189,45 @@ horizontally, the sides only vertically, and the centre fills the rest — so ar
 stays undistorted when a row grows wide or wraps. See
 [Samples/Backgrounds/README.md](../Samples/Backgrounds/README.md) for tips on making
 your own.
+
+### Key Labels
+
+| Setting | Description |
+|---|---|
+| Show all key input | When on, ordinary typing (letters/numbers) is displayed too. When off (default), only combinations and special keys are shown |
+| Distinguish upper/lower case letters | When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). When off (default), letters are always uppercase |
+| Arrow Keys | **Held together** (default): groups arrows only while two or more are down at once (diagonal movement). **Also consecutive**: keeps adding arrows pressed one after another (→→↓). **Off**: one row per press |
+| Show modifiers in the order pressed | Off (default) uses the conventional documentation order (⌃ ⌥ ⇧ ⌘); on shows them in the order you pressed them |
+| Separate keys with "+" | Shows combinations like Ctrl+Shift+S |
+| Label Style | **Mac**: ⌘ ⌥ ↩ symbols / **Windows**: Ctrl, Alt, Enter… / **Mac + Windows**: combined like "⌘/Ctrl" |
+| Show the symbol ⌥ produces | An ⌥ combination typed mid-sentence always joins the row as the symbol itself (Ω), regardless of this setting. Pressed on its own, it reads "⌥Z" with this off and "⌥Z → Ω" with it on. Accent marks (dead keys) appear as the mark itself |
+| Add 🌐 to input-switch keys | Marks the 英数/かな (ABC/あいう) keys with a globe so they are not mistaken for typed letters |
+| Show 英数/かな as ABC/あいう | Matches the key legends on newer JIS keyboards |
+| Show kana input as hiragana (JIS kana layout) | **For kana-input users.** While in Japanese input mode, typed keys are shown as JIS kana layout hiragana and symbols. Leave off if you use romaji input |
+
+**Windows label mapping:** ⌘/⌃ → Ctrl, ⌥ → Alt, ⇧ → Shift, ↩ → Enter,
+⌫ → BackSpace, ⌦ → Delete, ⎋ → Esc, 英数 → 無変換, かな → 変換, and so on.
+The mapping is *shortcut-equivalent*: when you press ⌘C on the Mac, Windows users in
+your audience see Ctrl+C — the shortcut they should press. (If ⌃ and ⌘ are held
+together, the duplicate Ctrl is shown only once.)
+
+### Display
+
+| Setting | Description |
+|---|---|
+| Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
+| Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for longer than the Hold Threshold**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
+| Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
+| Hold Duration | How long a row remains after release (0–5 s) |
+| Fade-out Duration | How long the fade takes (0.1–4 s) |
+| Animate typing growth | Smoothly animates rows growing as you type (default on). Turn off if the custom-image backdrop appears to lag behind the text |
+| Display Rows | Maximum simultaneous rows (1–8) |
+| Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
+| Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
+| Drag the key display to move it | When on, grab the keys on screen to move the display area. The fade-out pauses while dragging. Clicks directly on the keys no longer reach the app beneath (empty areas click through) |
+| Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position, display area and the Edit Display Mode appearance settings (style, size, rows, colors, background) are remembered per screen; "Reset Position & Size" clears the memory for all screens |
+| Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
+| Hide key display while the cursor is at the bottom edge | Hot-edge feature: while the cursor stays within 10 px of the bottom edge of any screen, the display is hidden and input during that time is not shown |
 
 ### Mouse
 

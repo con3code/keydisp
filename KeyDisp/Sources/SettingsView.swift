@@ -5,7 +5,7 @@ import SwiftUI
 
 /// 設定画面のサイドバー項目
 enum SettingsPane: String, CaseIterable, Identifiable {
-    case display, keyLabels, design, mouse, general, permissions, about
+    case design, keyLabels, display, mouse, general, permissions, about
     var id: String { rawValue }
 
     var title: String {
@@ -48,7 +48,7 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @State private var inputMonitoringOK = Permissions.inputMonitoringGranted
-    @State private var pane: SettingsPane = .display
+    @State private var pane: SettingsPane = .design
 
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
@@ -102,11 +102,6 @@ struct SettingsView: View {
 
     @ViewBuilder private var displaySection: some View {
             Section {
-                Toggle(L("すべてのキー入力を表示", "Show all key input"), isOn: $settings.showAllKeys)
-                Text(L("オフのときは、修飾キー付きのコンビネーションと特殊キー（↩ ⇥ ⎋ 矢印など）だけを表示します。オンにすると通常のタイピング（英数字など）も表示されます。",
-                       "When off, only combinations with modifier keys and special keys (↩ ⇥ ⎋ arrows, etc.) are shown. When on, ordinary typing (letters and numbers) is also displayed."))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
                 Toggle(L("同じキーの連続入力を ×n でまとめる", "Group repeated keys as ×n"), isOn: $settings.countRepeats)
                 Text(L("同じコンビネーションの連続押しや長押し（キーリピート）を、新しい行を増やさず「⌘V ×3」のような回数表示にまとめます。",
                        "Repeated presses or held key repeats of the same combination are shown as a count like \"⌘V ×3\" instead of new rows."))
@@ -182,6 +177,11 @@ struct SettingsView: View {
 
     @ViewBuilder private var keyLabelsSection: some View {
             Section {
+                Toggle(L("すべてのキー入力を表示", "Show all key input"), isOn: $settings.showAllKeys)
+                Text(L("オフのときは、修飾キー付きのコンビネーションと特殊キー（↩ ⇥ ⎋ 矢印など）だけを表示します。オンにすると通常のタイピング（英数字など）も表示されます。",
+                       "When off, only combinations with modifier keys and special keys (↩ ⇥ ⎋ arrows, etc.) are shown. When on, ordinary typing (letters and numbers) is also displayed."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 Toggle(L("英字の大文字/小文字を区別して表示", "Distinguish upper/lower case letters"), isOn: $settings.distinguishCase)
                 Text(L("オフのときは英字をすべて大文字で表示します。オンにするとタイピング表示が実際の入力どおり（Shift・Caps Lock を反映した大文字/小文字）になります。コンビネーション（⌘A など）は常に大文字表記です。",
                        "When off, letters are always shown uppercase. When on, typed letters appear exactly as entered (reflecting Shift and Caps Lock). Combinations (⌘A etc.) always use uppercase."))
