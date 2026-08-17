@@ -10,7 +10,7 @@ import ServiceManagement
 import SwiftUI
 
 @main
-final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWindowDelegate {
     static func main() {
         let app = NSApplication.shared
         let delegate = AppDelegate()
@@ -424,11 +424,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // 仮想デスクトップを移動しても、開くときはいま見ているデスクトップに出す
             window.collectionBehavior.insert(.moveToActiveSpace)
             centerOnMouseScreen(window)
+            window.delegate = self  // 閉じるときにカラーパネルを道連れにするため
             settingsWindow = window
         }
         settingsWindow?.title = L("KeyDisp 設定", "KeyDisp Settings")
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// 設定画面のカラーピッカーから開いたシステムのカラーパネルを道連れに閉じる。
+    /// 取り残されると閉じる操作を受け付けないまま画面に残ってしまうため（編集 HUD と同じ対処）
+    func windowWillClose(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === settingsWindow else { return }
+        if NSColorPanel.sharedColorPanelExists, NSColorPanel.shared.isVisible {
+            NSColorPanel.shared.orderOut(nil)
+        }
     }
 
     /// 権限が足りないときのガイド。初回起動時と、キー監視を開始できなかったときに出る。
