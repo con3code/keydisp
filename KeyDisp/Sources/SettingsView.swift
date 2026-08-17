@@ -124,7 +124,6 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
                 sliderRow(L("表示の持続時間", "Hold Duration"), value: $settings.holdDuration, in: 0...5, format: L("%.1f 秒", "%.1f s"))
                 sliderRow(L("フェードアウトの長さ", "Fade-out Duration"), value: $settings.fadeDuration, in: 0.1...4, format: L("%.1f 秒", "%.1f s"))
                 Toggle(L("文字の追記をアニメーションする", "Animate typing growth"), isOn: $settings.typingAnimation)
@@ -258,6 +257,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
 
+                sliderRow(L("サイズ", "Size"), value: $settings.displayScale, in: 0.5...5.0, format: "×%.1f")
                 ColorPicker(L("文字色", "Text Color"), selection: settings.colorBinding(\.textColorHex))
                 Toggle(L("文字を縁取りする", "Outline text"), isOn: $settings.textOutline)
                 ColorPicker(L("縁取りの色", "Outline Color"), selection: settings.colorBinding(\.textOutlineColorHex))

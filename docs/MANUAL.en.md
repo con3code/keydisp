@@ -178,7 +178,6 @@ Open **Settings…** from the menu bar. Settings are organized into a sidebar on
 | Group repeated keys as ×n | Groups repeated presses and key repeats into a count (default on) |
 | Keep a row each time a modifier is released | Decides what happens when you release part of a combination and **hold the rest for longer than the Hold Threshold**. **On**: the combination so far stays as history and the keys still held start a new row (⌥⇧⌘ → ⇧⌘ → ⇧) — useful when the press-and-release steps are what you are teaching. **Off (default)**: no row is added; the row simply narrows to the keys still held. Either way, releasing everything sooner leaves the whole combination (⌥⇧⌘) as one row |
 | Hold Threshold | How long the remaining keys must stay down to count as deliberately held (0.2–2.0 s, default 0.5) |
-| Size | Scale of the key display (×0.5–×5.0) |
 | Hold Duration | How long a row remains after release (0–5 s) |
 | Fade-out Duration | How long the fade takes (0.1–4 s) |
 | Animate typing growth | Smoothly animates rows growing as you type (default on). Turn off if the custom-image backdrop appears to lag behind the text |
@@ -215,6 +214,7 @@ together, the duplicate Ctrl is shown only once.)
 | Setting | Description |
 |---|---|
 | Key Style | Simple (text only) / Keycap (key-shaped) / Custom Image |
+| Size | Scale of the key display (×0.5–×5.0) |
 | Text Color | Color of the key text |
 | Outline text / Outline Color | Draws a contour around the text — keeps it readable over bright content when the background is off |
 | Key / Background Color | Color of keycaps or row background |
