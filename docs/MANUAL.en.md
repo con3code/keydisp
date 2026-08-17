@@ -209,6 +209,7 @@ together, the duplicate Ctrl is shown only once.)
 |---|---|
 | Key Style | Simple (text only) / Keycap (key-shaped) / Custom Image |
 | Text Color | Color of the key text |
+| Outline text / Outline Color | Draws a contour around the text — keeps it readable over bright content when the background is off |
 | Key / Background Color | Color of keycaps or row background |
 | Show Background | Toggles the background |
 | Background Opacity | 0–100% |

@@ -222,6 +222,32 @@ extension RowAlignment {
     }
 }
 
+/// 文字の縁取り。SwiftUI の Text に縁取り機能は無いため、
+/// ぼかしゼロの影を 8 方向へ重ねて輪郭を作る。
+/// 背景を表示しない使い方で、明るい画面の上でも文字を読み取りやすくする。
+struct TextOutline: ViewModifier {
+    @ObservedObject var settings: AppSettings
+
+    func body(content: Content) -> some View {
+        if settings.textOutline {
+            let w = 1.4 * CGFloat(settings.displayScale)
+            let d = w * 0.7071
+            let color = Color(nsColor: settings.textOutlineColor)
+            content
+                .shadow(color: color, radius: 0, x: w, y: 0)
+                .shadow(color: color, radius: 0, x: -w, y: 0)
+                .shadow(color: color, radius: 0, x: 0, y: w)
+                .shadow(color: color, radius: 0, x: 0, y: -w)
+                .shadow(color: color, radius: 0, x: d, y: d)
+                .shadow(color: color, radius: 0, x: d, y: -d)
+                .shadow(color: color, radius: 0, x: -d, y: d)
+                .shadow(color: color, radius: 0, x: -d, y: -d)
+        } else {
+            content
+        }
+    }
+}
+
 /// オーバーレイウィンドウの中身。
 /// 下端に揃えてキー入力の行が積み上がり、新しい行が入ると古い行が上へスライドする。
 struct OverlayRootView: View {
@@ -432,6 +458,7 @@ struct KeyEntryRow: View {
             displayText
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(textColor)
+                .modifier(TextOutline(settings: settings))
                 .multilineTextAlignment(settings.rowAlignment.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14 * settings.displayScale)
@@ -449,6 +476,7 @@ struct KeyEntryRow: View {
                         Text("+")
                             .font(.system(size: 20 * settings.displayScale, weight: .bold, design: .rounded))
                             .foregroundColor(textColor)
+                            .modifier(TextOutline(settings: settings))
                             .shadow(color: .black.opacity(0.5), radius: 2)
                     }
                     if KeyFormatter.isOptionResultArrow(token) {
@@ -456,6 +484,7 @@ struct KeyEntryRow: View {
                         Text(KeyFormatter.optionResultArrowGlyph)
                             .font(.system(size: 20 * settings.displayScale, weight: .bold, design: .rounded))
                             .foregroundColor(textColor)
+                            .modifier(TextOutline(settings: settings))
                             .shadow(color: .black.opacity(0.5), radius: 2)
                     } else {
                         KeycapView(token: token, settings: settings)
@@ -465,6 +494,7 @@ struct KeyEntryRow: View {
                     Text("×\(entry.count)")
                         .font(.system(size: 22 * settings.displayScale, weight: .heavy, design: .rounded))
                         .foregroundColor(textColor)
+                        .modifier(TextOutline(settings: settings))
                         .shadow(color: .black.opacity(0.5), radius: 2)
                 }
             }
@@ -474,6 +504,7 @@ struct KeyEntryRow: View {
             displayText
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(textColor)
+                .modifier(TextOutline(settings: settings))
                 .multilineTextAlignment(settings.rowAlignment.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 22 * settings.displayScale)
@@ -560,6 +591,8 @@ struct KeycapView: View {
     private var opacity: Double { settings.backgroundEnabled ? settings.backgroundOpacity : 0.15 }
 
     var body: some View {
+        // キーキャップは自前の背景を持つので、文字の縁取りは適用しない
+        // （適用すると外側の影と重なって滲んで見える）
         labelView
             .foregroundColor(textColor)
             .lineLimit(1)

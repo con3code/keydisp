@@ -126,6 +126,8 @@ final class AppSettings: ObservableObject {
     @Published var style: KeyStyle { didSet { d.set(style.rawValue, forKey: "keyStyle") } }
     @Published var rowAlignment: RowAlignment { didSet { d.set(rowAlignment.rawValue, forKey: "rowAlignment") } }
     @Published var textColorHex: String { didSet { d.set(textColorHex, forKey: "textColorHex") } }
+    @Published var textOutline: Bool { didSet { d.set(textOutline, forKey: "textOutline") } }
+    @Published var textOutlineColorHex: String { didSet { d.set(textOutlineColorHex, forKey: "textOutlineColorHex") } }
     @Published var keyColorHex: String { didSet { d.set(keyColorHex, forKey: "keyColorHex") } }
     @Published var backgroundOpacity: Double { didSet { d.set(backgroundOpacity, forKey: "backgroundOpacity") } }
     @Published var backgroundEnabled: Bool { didSet { d.set(backgroundEnabled, forKey: "backgroundEnabled") } }
@@ -203,6 +205,8 @@ final class AppSettings: ObservableObject {
         style = KeyStyle(rawValue: d.object(forKey: "keyStyle") as? Int ?? 1) ?? .keycap
         rowAlignment = RowAlignment(rawValue: d.object(forKey: "rowAlignment") as? Int ?? 0) ?? .left
         textColorHex = d.object(forKey: "textColorHex") as? String ?? "#FFFFFF"
+        textOutline = d.object(forKey: "textOutline") as? Bool ?? false
+        textOutlineColorHex = d.object(forKey: "textOutlineColorHex") as? String ?? "#000000"
         keyColorHex = d.object(forKey: "keyColorHex") as? String ?? "#1C1C22"
         backgroundOpacity = d.object(forKey: "backgroundOpacity") as? Double ?? 0.75
         backgroundEnabled = d.object(forKey: "backgroundEnabled") as? Bool ?? true
@@ -235,6 +239,7 @@ final class AppSettings: ObservableObject {
     }
 
     var textColor: NSColor { NSColor(hexString: textColorHex) ?? .white }
+    var textOutlineColor: NSColor { NSColor(hexString: textOutlineColorHex) ?? .black }
     var keyColor: NSColor { NSColor(hexString: keyColorHex) ?? .black }
 
     /// 現在の言語設定で日本語 UI を使うか

@@ -248,6 +248,13 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
 
                 ColorPicker(L("文字色", "Text Color"), selection: settings.colorBinding(\.textColorHex))
+                Toggle(L("文字を縁取りする", "Outline text"), isOn: $settings.textOutline)
+                ColorPicker(L("縁取りの色", "Outline Color"), selection: settings.colorBinding(\.textOutlineColorHex))
+                    .disabled(!settings.textOutline)
+                Text(L("文字の周囲に輪郭を描きます。背景を表示しない使い方で、明るい画面の上でも文字が読み取りやすくなります。",
+                       "Draws a contour around the text, keeping it readable over bright content when the background is turned off."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 ColorPicker(L("キー / 背景色", "Key / Background Color"), selection: settings.colorBinding(\.keyColorHex))
                 Toggle(L("背景を表示", "Show Background"), isOn: $settings.backgroundEnabled)
                 sliderRow(L("背景の濃さ", "Background Opacity"), value: $settings.backgroundOpacity, in: 0...1, format: "%.0f%%", multiplier: 100)
