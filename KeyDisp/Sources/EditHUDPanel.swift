@@ -60,6 +60,11 @@ final class EditHUDPanelController: NSObject, NSWindowDelegate {
     }
 
     func hide() {
+        // HUD のカラーピッカーから開いたシステムのカラーパネルを道連れに閉じる。
+        // 取り残されると閉じる操作を受け付けないまま画面に残ってしまうため
+        if NSColorPanel.sharedColorPanelExists, NSColorPanel.shared.isVisible {
+            NSColorPanel.shared.orderOut(nil)
+        }
         panel.orderOut(nil)
     }
 

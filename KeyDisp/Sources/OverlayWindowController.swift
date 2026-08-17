@@ -10,8 +10,8 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     private static let frameKey = "OverlayWindowFrame"
     /// カーソル追従用: 画面（ディスプレイ UUID）ごとの定位置
     private static let framesByScreenKey = "OverlayFrameByScreen"
-    /// カーソル追従用: 画面ごとの表示倍率（キーの大きさ）
-    private static let scalesByScreenKey = "OverlayScaleByScreen"
+    /// カーソル追従用: 画面ごとの表示設定一式（編集 HUD にある項目）
+    private static let profilesByScreenKey = "OverlayProfileByScreen"
     static let defaultSize = NSSize(width: 620, height: 440)
 
     let panel: NSPanel
@@ -22,6 +22,8 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     private var wantsVisible = false
     /// 行が「増えた」ことを検知するための直前の行数（カーソル追従の切替契機）
     private var lastEntryCount = 0
+    /// 画面切替でプロファイルを適用している最中（保存の連鎖を防ぐ）
+    private var isApplyingProfile = false
 
     init(model: KeyDisplayModel, settings: AppSettings = .shared) {
         self.model = model
@@ -88,14 +90,23 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             .sink { [weak self] _ in self?.refreshVisibility() }
             .store(in: &cancellables)
 
-        // 表示倍率（サイズ）の変更を、いまいる画面の値として記憶する
-        // （カーソル追従で、会場は大きく・手元は小さく、のような使い分けができるように）
-        settings.$displayScale
-            .removeDuplicates()
-            .dropFirst()
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] scale in self?.rememberScale(scale) }
-            .store(in: &cancellables)
+        // 編集 HUD にある表示設定（スタイル・サイズ・行数・色・背景など）の変更を、
+        // いまキー表示がある画面の設定一式として記憶する
+        // （カーソル追従で、会場は大きく濃く・手元は小さく薄く、のような使い分けができるように）
+        Publishers.MergeMany(
+            settings.$style.map { _ in () }.eraseToAnyPublisher(),
+            settings.$displayScale.map { _ in () }.eraseToAnyPublisher(),
+            settings.$maxRows.map { _ in () }.eraseToAnyPublisher(),
+            settings.$stackFromTop.map { _ in () }.eraseToAnyPublisher(),
+            settings.$textColorHex.map { _ in () }.eraseToAnyPublisher(),
+            settings.$keyColorHex.map { _ in () }.eraseToAnyPublisher(),
+            settings.$backgroundEnabled.map { _ in () }.eraseToAnyPublisher(),
+            settings.$backgroundOpacity.map { _ in () }.eraseToAnyPublisher()
+        )
+        .dropFirst(8)  // 購読時に各設定が 1 回ずつ発火するぶんを読み飛ばす
+        .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
+        .sink { [weak self] in self?.rememberProfile() }
+        .store(in: &cancellables)
 
         // 「ドラッグで移動」オプションに応じてマウスの受付を切り替える
         settings.$dragToMove
@@ -164,10 +175,10 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         panel.setFrame(clamp(frame, to: target), display: true)
         publishContentWidth()
         saveFrame()
-        // その画面で記憶している表示倍率があれば切り替える。
-        // 必ずフレームを移した後に行う（先に変えると、倍率の記憶が移動前の画面に上書きされる）
-        if let scale = storedScale(for: target), abs(scale - settings.displayScale) > 0.001 {
-            settings.displayScale = scale
+        // その画面で記憶している表示設定一式があれば適用する。
+        // 必ずフレームを移した後に行う（先に変えると、記憶が移動前の画面に上書きされる）
+        if let profile = storedProfile(for: target) {
+            applyProfile(profile)
         }
     }
 
@@ -207,20 +218,65 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         NSScreen.screens.first { $0.frame.contains(point) }
     }
 
-    /// いまキー表示がある画面の表示倍率として記憶する
-    private func rememberScale(_ scale: Double) {
+    /// 編集 HUD にある表示設定の現在値一式
+    private func currentProfile() -> [String: Any] {
+        [
+            "style": settings.style.rawValue,
+            "displayScale": settings.displayScale,
+            "maxRows": settings.maxRows,
+            "stackFromTop": settings.stackFromTop,
+            "textColorHex": settings.textColorHex,
+            "keyColorHex": settings.keyColorHex,
+            "backgroundEnabled": settings.backgroundEnabled,
+            "backgroundOpacity": settings.backgroundOpacity,
+        ]
+    }
+
+    /// いまキー表示がある画面の表示設定一式として記憶する
+    private func rememberProfile() {
+        guard !isApplyingProfile else { return }
         let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
         guard let screen = panel.screen ?? screenContaining(center),
               let key = Self.screenKey(screen) else { return }
-        var dict = UserDefaults.standard.dictionary(forKey: Self.scalesByScreenKey) as? [String: Double] ?? [:]
-        dict[key] = scale
-        UserDefaults.standard.set(dict, forKey: Self.scalesByScreenKey)
+        var dict = UserDefaults.standard.dictionary(forKey: Self.profilesByScreenKey) as? [String: [String: Any]] ?? [:]
+        dict[key] = currentProfile()
+        UserDefaults.standard.set(dict, forKey: Self.profilesByScreenKey)
     }
 
-    private func storedScale(for screen: NSScreen) -> Double? {
+    private func storedProfile(for screen: NSScreen) -> [String: Any]? {
         guard let key = Self.screenKey(screen),
-              let dict = UserDefaults.standard.dictionary(forKey: Self.scalesByScreenKey) as? [String: Double] else { return nil }
+              let dict = UserDefaults.standard.dictionary(forKey: Self.profilesByScreenKey) as? [String: [String: Any]] else { return nil }
         return dict[key]
+    }
+
+    /// 記憶していた表示設定一式を反映する（値が変わるものだけ書き込む）
+    private func applyProfile(_ profile: [String: Any]) {
+        isApplyingProfile = true
+        defer { isApplyingProfile = false }
+        if let v = profile["style"] as? Int, let st = KeyStyle(rawValue: v), st != settings.style {
+            settings.style = st
+        }
+        if let v = profile["displayScale"] as? Double, abs(v - settings.displayScale) > 0.001 {
+            settings.displayScale = v
+        }
+        if let v = profile["maxRows"] as? Double, abs(v - settings.maxRows) > 0.001 {
+            settings.maxRows = v
+        }
+        if let v = profile["stackFromTop"] as? Bool, v != settings.stackFromTop {
+            settings.stackFromTop = v
+        }
+        if let v = profile["textColorHex"] as? String, v != settings.textColorHex {
+            settings.textColorHex = v
+        }
+        if let v = profile["keyColorHex"] as? String, v != settings.keyColorHex {
+            settings.keyColorHex = v
+        }
+        if let v = profile["backgroundEnabled"] as? Bool, v != settings.backgroundEnabled {
+            settings.backgroundEnabled = v
+        }
+        if let v = profile["backgroundOpacity"] as? Double, abs(v - settings.backgroundOpacity) > 0.001 {
+            settings.backgroundOpacity = v
+        }
     }
 
     /// ディスプレイ固有の識別子。プロジェクタを抜き差ししても記憶が残るよう UUID を使う
@@ -305,9 +361,10 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     /// 位置とサイズをメインスクリーン左下のデフォルト状態へ戻す。
     /// サイズは現在の表示倍率を考慮して決める（大きな倍率でも表示が収まるように）。
     func resetPosition() {
-        // 画面ごとの定位置・表示倍率の記憶もすべてクリアして、まっさらな既定状態へ戻す
+        // 画面ごとの定位置・表示設定の記憶もすべてクリアして、まっさらな既定状態へ戻す
         UserDefaults.standard.removeObject(forKey: Self.framesByScreenKey)
-        UserDefaults.standard.removeObject(forKey: Self.scalesByScreenKey)
+        UserDefaults.standard.removeObject(forKey: Self.profilesByScreenKey)
+        UserDefaults.standard.removeObject(forKey: "OverlayScaleByScreen")  // 旧形式の掃除
         guard let screen = NSScreen.main else { return }
         let v = screen.visibleFrame
         let scale = max(1, settings.displayScale)
