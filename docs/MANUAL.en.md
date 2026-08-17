@@ -321,9 +321,10 @@ specific to your keyboard. Please report the number on
 ## 8. FAQ
 
 **Q. Is KeyDisp on the App Store?**
-A. No. The App Sandbox required by the App Store prohibits the global event tap
-KeyDisp uses to observe keystrokes. This restriction applies to all keystroke
-visualizers.
+A. Not yet — it is currently distributed from GitHub, and an App Store release
+is in preparation. As of v1.1.0 KeyDisp runs inside the App Sandbox (key capture
+uses the Input Monitoring permission), so it technically meets App Store
+requirements.
 
 **Q. Does KeyDisp log or transmit my input?**
 A. No. Its entire job is displaying input on screen. Nothing is stored or sent,
