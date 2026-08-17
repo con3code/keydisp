@@ -188,6 +188,8 @@ final class AppSettings: ObservableObject {
     @Published var editMode: Bool = false
     /// オーバーレイの内側の幅。1 行に何個のキーが入るかの判断に使う（0 なら未設定）
     var overlayContentWidth: Double = 0
+    /// いま見えている行の矩形（オーバーレイ内座標・上原点）。ドラッグ移動の当たり判定用
+    var visibleRowFrames: [CGRect] = []
     /// メニューバーホットエッジによる一時非表示中（キー入力の処理も停止する）
     @Published var hotCornerSuppressed: Bool = false
     /// いまキー表示がある画面が「この画面では表示しない」に設定されているか。

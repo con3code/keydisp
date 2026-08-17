@@ -248,6 +248,14 @@ struct TextOutline: ViewModifier {
     }
 }
 
+/// ドラッグ移動の当たり判定用に、見えている行の矩形を集める
+struct RowFramesKey: PreferenceKey {
+    static var defaultValue: [CGRect] = []
+    static func reduce(value: inout [CGRect], nextValue: () -> [CGRect]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
 /// オーバーレイウィンドウの中身。
 /// 下端に揃えてキー入力の行が積み上がり、新しい行が入ると古い行が上へスライドする。
 struct OverlayRootView: View {
@@ -317,6 +325,10 @@ struct OverlayRootView: View {
                 .animation(.spring(response: 0.28, dampingFraction: 0.85), value: model.entries)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .coordinateSpace(name: "overlaySpace")
+            .onPreferenceChange(RowFramesKey.self) { frames in
+                settings.visibleRowFrames = frames
+            }
         }
     }
 }
@@ -477,6 +489,10 @@ struct KeyEntryRow: View {
                     RoundedRectangle(cornerRadius: 14 * settings.displayScale, style: .continuous)
                         .fill(keyColor.opacity(bgOpacity))
                 )
+                .background(GeometryReader { g in
+                    Color.clear.preference(key: RowFramesKey.self,
+                                           value: [g.frame(in: .named("overlaySpace"))])
+                })
                 .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
 
         case .keycap:
@@ -508,7 +524,11 @@ struct KeyEntryRow: View {
                         .shadow(color: .black.opacity(0.5), radius: 2)
                 }
             }
-            .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
+            .background(GeometryReader { g in
+                    Color.clear.preference(key: RowFramesKey.self,
+                                           value: [g.frame(in: .named("overlaySpace"))])
+                })
+                .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
 
         case .customImage:
             displayText
@@ -520,6 +540,10 @@ struct KeyEntryRow: View {
                 .padding(.horizontal, 22 * settings.displayScale)
                 .padding(.vertical, 10 * settings.displayScale)
                 .background(customBackground)
+                .background(GeometryReader { g in
+                    Color.clear.preference(key: RowFramesKey.self,
+                                           value: [g.frame(in: .named("overlaySpace"))])
+                })
                 .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
         }
     }

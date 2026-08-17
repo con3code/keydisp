@@ -133,9 +133,62 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         }
     }
 
-    /// 通常モードでもドラッグ移動を許可するか（編集モード中は常に許可）
+    /// マウスの受付方針を更新する。
+    /// - 編集モード: 全域で受け付ける（枠のリサイズや空き領域のドラッグも編集操作のため）
+    /// - ドラッグ移動オプション: 行の上にカーソルがあるときだけ受け付ける。
+    ///   レイヤー描画のウィンドウでは「透明ピクセルはクリック透過」という OS の挙動が
+    ///   効かないため、行の矩形を実測してカーソル位置に応じて受付を切り替える
     private func refreshMouseAcceptance() {
-        panel.ignoresMouseEvents = !(settings.editMode || settings.dragToMove)
+        if settings.editMode {
+            panel.ignoresMouseEvents = false
+            removeRowHoverMonitors()
+        } else if settings.dragToMove {
+            panel.ignoresMouseEvents = true  // 行の上に来たときだけ受け付ける
+            installRowHoverMonitors()
+        } else {
+            panel.ignoresMouseEvents = true
+            removeRowHoverMonitors()
+        }
+    }
+
+    private func installRowHoverMonitors() {
+        guard rowHoverGlobalMonitor == nil else { return }
+        rowHoverGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+            self?.updateRowHover()
+        }
+        rowHoverLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
+            self?.updateRowHover()
+            return event
+        }
+    }
+
+    private func removeRowHoverMonitors() {
+        if let m = rowHoverGlobalMonitor { NSEvent.removeMonitor(m); rowHoverGlobalMonitor = nil }
+        if let m = rowHoverLocalMonitor { NSEvent.removeMonitor(m); rowHoverLocalMonitor = nil }
+    }
+
+    private func updateRowHover() {
+        guard settings.dragToMove, !settings.editMode, panel.isVisible,
+              dragEndWatcher == nil else { return }
+        let over = cursorIsOverRow(NSEvent.mouseLocation)
+        if panel.ignoresMouseEvents == over {
+            panel.ignoresMouseEvents = !over
+        }
+    }
+
+    /// カーソルが見えている行のいずれかの上（少し余裕を持たせる）にあるか
+    private func cursorIsOverRow(_ loc: CGPoint) -> Bool {
+        let f = panel.frame
+        guard f.contains(loc) else { return false }
+        for r in settings.visibleRowFrames {
+            // ビュー座標（上原点）→ 画面座標（下原点）
+            let global = CGRect(
+                x: f.minX + r.minX, y: f.maxY - r.maxY,
+                width: r.width, height: r.height
+            ).insetBy(dx: -8, dy: -8)
+            if global.contains(loc) { return true }
+        }
+        return false
     }
 
     // MARK: - ドラッグ中のフェード一時停止
@@ -143,6 +196,9 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     private var dragEndWatcher: Timer?
     /// ドラッグ開始時にオーバーレイがあった画面（またぎ検出用）
     private var dragStartScreenKey: String?
+    /// ドラッグ移動オプション用: 行の上にカーソルがあるかを監視するモニタ
+    private var rowHoverGlobalMonitor: Any?
+    private var rowHoverLocalMonitor: Any?
     /// スマートガイド（編集モードのドラッグ中に画面中心へ吸着したとき表示）
     private var guidePanel: NSPanel?
     private var guideHosting: NSHostingView<CenterGuideView>?
