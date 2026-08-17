@@ -25,6 +25,23 @@ func L(_ ja: String, _ en: String) -> String {
 }
 
 /// キー表示のデザインスタイル
+/// キー表示の行の水平方向の揃え
+enum RowAlignment: Int, CaseIterable, Identifiable {
+    case left = 0
+    case center = 1
+    case right = 2
+
+    var id: Int { rawValue }
+
+    var label: String {
+        switch self {
+        case .left:   return L("左揃え", "Left")
+        case .center: return L("中央揃え", "Center")
+        case .right:  return L("右揃え", "Right")
+        }
+    }
+}
+
 enum KeyStyle: Int, CaseIterable, Identifiable {
     case simple = 0      // シンプルな文字表示
     case keycap = 1      // キーキャップ風デザイン
@@ -107,6 +124,7 @@ final class AppSettings: ObservableObject {
 
     // MARK: デザイン
     @Published var style: KeyStyle { didSet { d.set(style.rawValue, forKey: "keyStyle") } }
+    @Published var rowAlignment: RowAlignment { didSet { d.set(rowAlignment.rawValue, forKey: "rowAlignment") } }
     @Published var textColorHex: String { didSet { d.set(textColorHex, forKey: "textColorHex") } }
     @Published var keyColorHex: String { didSet { d.set(keyColorHex, forKey: "keyColorHex") } }
     @Published var backgroundOpacity: Double { didSet { d.set(backgroundOpacity, forKey: "backgroundOpacity") } }
@@ -183,6 +201,7 @@ final class AppSettings: ObservableObject {
         topEdgeFreeze = d.object(forKey: "topEdgeFreeze") as? Bool ?? false
         dragToMove = d.object(forKey: "dragToMove") as? Bool ?? false
         style = KeyStyle(rawValue: d.object(forKey: "keyStyle") as? Int ?? 1) ?? .keycap
+        rowAlignment = RowAlignment(rawValue: d.object(forKey: "rowAlignment") as? Int ?? 0) ?? .left
         textColorHex = d.object(forKey: "textColorHex") as? String ?? "#FFFFFF"
         keyColorHex = d.object(forKey: "keyColorHex") as? String ?? "#1C1C22"
         backgroundOpacity = d.object(forKey: "backgroundOpacity") as? Double ?? 0.75

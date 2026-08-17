@@ -179,6 +179,7 @@ Open **Settings…** from the menu bar. Settings are organized into a sidebar on
 | Fade-out Duration | How long the fade takes (0.1–4 s) |
 | Display Rows | Maximum simultaneous rows (1–8) |
 | Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
+| Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
 | Drag the key display to move it | When on, grab the keys on screen to move the display area. The fade-out pauses while dragging. Clicks directly on the keys no longer reach the app beneath (empty areas click through) |
 | Hide key display while the cursor is at the bottom edge | Hot-edge feature: while the cursor stays within 10 px of the bottom edge of any screen, the display is hidden and input during that time is not shown |
 
@@ -296,10 +297,10 @@ copy of the app. Use step 5 above (remove → re-add) to fix it.
 
 This is by design. Turn on "Show all key input" (Settings → Display).
 
-### Volume / media keys (F7–F12) are not displayed
+### About the F7–F12 media keys
 
-These keys are delivered through a different macOS event mechanism and are not
-shown in the current version.
+Volume, mute, playback and brightness keys are shown with their F-key labels
+(F7–F12 etc.), whether pressed directly or with fn held.
 
 ### A label like "key123" appears
 

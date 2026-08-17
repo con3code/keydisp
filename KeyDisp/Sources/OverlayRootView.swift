@@ -188,6 +188,40 @@ enum OverlayMetrics {
     }
 }
 
+extension RowAlignment {
+    var horizontal: HorizontalAlignment {
+        switch self {
+        case .left:   return .leading
+        case .center: return .center
+        case .right:  return .trailing
+        }
+    }
+
+    var rowFrame: Alignment {
+        switch self {
+        case .left:   return .leading
+        case .center: return .center
+        case .right:  return .trailing
+        }
+    }
+
+    var text: TextAlignment {
+        switch self {
+        case .left:   return .leading
+        case .center: return .center
+        case .right:  return .trailing
+        }
+    }
+
+    func frameAlignment(top: Bool) -> Alignment {
+        switch self {
+        case .left:   return top ? .topLeading : .bottomLeading
+        case .center: return top ? .top : .bottom
+        case .right:  return top ? .topTrailing : .bottomTrailing
+        }
+    }
+}
+
 /// オーバーレイウィンドウの中身。
 /// 下端に揃えてキー入力の行が積み上がり、新しい行が入ると古い行が上へスライドする。
 struct OverlayRootView: View {
@@ -228,7 +262,7 @@ struct OverlayRootView: View {
                         .background(Color.black.opacity(0.06).cornerRadius(12))
                 }
 
-                VStack(alignment: .leading, spacing: 8 * settings.displayScale) {
+                VStack(alignment: settings.rowAlignment.horizontal, spacing: 8 * settings.displayScale) {
                     ForEach(settings.stackFromTop ? shown.reversed() : shown) { entry in
                         KeyEntryRow(entry: entry, settings: settings, maxWidth: rowMaxWidth)
                             .opacity(entry.phase == .fading ? 0 : 1)
@@ -242,7 +276,7 @@ struct OverlayRootView: View {
                 .padding(16)
                 .frame(
                     maxWidth: .infinity, maxHeight: .infinity,
-                    alignment: settings.stackFromTop ? .topLeading : .bottomLeading
+                    alignment: settings.rowAlignment.frameAlignment(top: settings.stackFromTop)
                 )
                 .animation(.spring(response: 0.28, dampingFraction: 0.85), value: model.entries)
             }
@@ -398,7 +432,7 @@ struct KeyEntryRow: View {
             displayText
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(textColor)
-                .multilineTextAlignment(.leading)
+                .multilineTextAlignment(settings.rowAlignment.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 14 * settings.displayScale)
                 .padding(.vertical, 7 * settings.displayScale)
@@ -406,7 +440,7 @@ struct KeyEntryRow: View {
                     RoundedRectangle(cornerRadius: 14 * settings.displayScale, style: .continuous)
                         .fill(keyColor.opacity(bgOpacity))
                 )
-                .frame(maxWidth: maxWidth, alignment: .leading)
+                .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
 
         case .keycap:
             FlowLayout(spacing: 5 * settings.displayScale) {
@@ -434,18 +468,18 @@ struct KeyEntryRow: View {
                         .shadow(color: .black.opacity(0.5), radius: 2)
                 }
             }
-            .frame(maxWidth: maxWidth, alignment: .leading)
+            .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
 
         case .customImage:
             displayText
                 .font(.system(size: fontSize, weight: .semibold, design: .rounded))
                 .foregroundColor(textColor)
-                .multilineTextAlignment(.leading)
+                .multilineTextAlignment(settings.rowAlignment.text)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 22 * settings.displayScale)
                 .padding(.vertical, 10 * settings.displayScale)
                 .background(customBackground)
-                .frame(maxWidth: maxWidth, alignment: .leading)
+                .frame(maxWidth: maxWidth, alignment: settings.rowAlignment.rowFrame)
         }
     }
 

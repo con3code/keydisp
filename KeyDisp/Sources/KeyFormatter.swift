@@ -39,7 +39,36 @@ enum KeyFormatter {
         176: "F5",  // 音声入力
         178: "F6",  // おやすみモード
         179: "🌐",  // 🌐/fn 単独押し（絵文字と記号を表示）
+        // メディアキー（NX_SYSDEFINED で届く音量・再生系）。
+        // 実キーコードと衝突しない 1000 番台の擬似コードに写像して表示する
+        1001: "F1",  // 輝度を下げる（NX 経由で届く機種）
+        1002: "F2",  // 輝度を上げる（同上）
+        1005: "F5",  // キーボードバックライトを下げる（旧機種）
+        1006: "F6",  // キーボードバックライトを上げる（旧機種）
+        1007: "F7",  // 前へ / 巻き戻し
+        1008: "F8",  // 再生 / 一時停止
+        1009: "F9",  // 次へ / 早送り
+        1010: "F10", // 消音
+        1011: "F11", // 音量を下げる
+        1012: "F12", // 音量を上げる
     ]
+
+    /// NX_SYSDEFINED のメディアキー番号 → 表示用の擬似キーコード
+    static func mediaKeyCode(forNX nx: Int) -> CGKeyCode? {
+        switch nx {
+        case 3:      return 1001  // NX_KEYTYPE_BRIGHTNESS_DOWN
+        case 2:      return 1002  // NX_KEYTYPE_BRIGHTNESS_UP
+        case 22:     return 1005  // NX_KEYTYPE_ILLUMINATION_DOWN
+        case 21:     return 1006  // NX_KEYTYPE_ILLUMINATION_UP
+        case 18, 20: return 1007  // PREVIOUS / REWIND
+        case 16:     return 1008  // PLAY
+        case 17, 19: return 1009  // NEXT / FAST
+        case 7:      return 1010  // MUTE
+        case 1:      return 1011  // SOUND_DOWN
+        case 0:      return 1012  // SOUND_UP
+        default:     return nil
+        }
+    }
 
     /// fn フラグが暗黙に付くキー（矢印・ファンクションキーなど）。
     /// これらのキーでは fn 表示を省略する。

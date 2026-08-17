@@ -92,7 +92,8 @@ final class KeyCaptureController {
             (1 << CGEventType.otherMouseUp.rawValue) |
             (1 << CGEventType.leftMouseDragged.rawValue) |
             (1 << CGEventType.rightMouseDragged.rawValue) |
-            (1 << CGEventType.otherMouseDragged.rawValue)
+            (1 << CGEventType.otherMouseDragged.rawValue) |
+            (1 << Self.systemDefinedEventType)  // メディアキー（音量・再生など）
         // .mouseMoved は購読しない。タップに含めるとマウスを動かすたびに
         // このプロセスが起床してしまうため、必要とする側（大きいカーソル）が
         // 機能オンの間だけ NSEvent のモニタで受ける。
@@ -411,11 +412,23 @@ final class KeyCaptureController {
 
     // MARK: - イベント処理
 
+    /// NX_SYSDEFINED（メディアキーなどのシステム定義イベント）のイベント番号
+    private static let systemDefinedEventType: UInt32 = 14
+    /// メディアキー（音量・再生など）を示すサブタイプ
+    private static let auxControlSubtype = 8
+
     /// イベントの入口。イベントタップから呼ばれるほか、テストからも直接呼べる。
     func handle(type: CGEventType, event: CGEvent) {
         // タイムアウト等でタップが無効化されたら再度有効にする
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+            return
+        }
+
+        // メディアキー（音量・再生・輝度など）は通常のキーイベントではなく
+        // システム定義イベントとして届くので、ここで解釈して表示経路へ流す
+        if type.rawValue == Self.systemDefinedEventType {
+            handleSystemDefinedEvent(event)
             return
         }
 
@@ -450,6 +463,28 @@ final class KeyCaptureController {
 
         // 取り残された行があればここで回収する（複雑な組み合わせの取りこぼし対策）
         releaseOrphanRows()
+    }
+
+    /// NX_SYSDEFINED イベントからメディアキーの押下情報を取り出す
+    private func handleSystemDefinedEvent(_ event: CGEvent) {
+        guard let ns = NSEvent(cgEvent: event),
+              ns.subtype.rawValue == Self.auxControlSubtype else { return }
+        let data = ns.data1
+        let nxCode = (data & 0xFFFF_0000) >> 16
+        let keyFlags = data & 0x0000_FFFF
+        let isDown = (keyFlags & 0xFF00) == 0x0A00
+        let isRepeat = (keyFlags & 0x1) == 1
+        handleMediaKey(nxCode: nxCode, isDown: isDown, isRepeat: isRepeat, flags: event.flags)
+    }
+
+    /// メディアキーを擬似キーコード（F7 など）に写像し、通常のキーと同じ経路で表示する。
+    /// テストからも直接呼べる。
+    func handleMediaKey(nxCode: Int, isDown: Bool, isRepeat: Bool, flags: CGEventFlags) {
+        guard let code = KeyFormatter.mediaKeyCode(forNX: nxCode),
+              let e = CGEvent(keyboardEventSource: nil, virtualKey: code, keyDown: isDown) else { return }
+        e.flags = flags
+        if isRepeat { e.setIntegerValueField(.keyboardEventAutorepeat, value: 1) }
+        handle(type: isDown ? .keyDown : .keyUp, event: e)
     }
 
     private func handleKeyDown(_ event: CGEvent) {
