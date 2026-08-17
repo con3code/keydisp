@@ -60,6 +60,7 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
 
         restoreFrame()
         publishContentWidth()
+        restoreHiddenFlagForCurrentScreen()
 
         // 表示サイズ・行数を変えたときは、キー表示が切れないよう表示領域を広げる
         Publishers.CombineLatest3(
@@ -89,6 +90,11 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.refreshVisibility() }
             .store(in: &cancellables)
+        settings.$hiddenOnCurrentScreen
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refreshVisibility() }
+            .store(in: &cancellables)
 
         // 編集 HUD にある表示設定（スタイル・サイズ・行数・色・背景など）の変更を、
         // いまキー表示がある画面の設定一式として記憶する
@@ -101,9 +107,10 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             settings.$textColorHex.map { _ in () }.eraseToAnyPublisher(),
             settings.$keyColorHex.map { _ in () }.eraseToAnyPublisher(),
             settings.$backgroundEnabled.map { _ in () }.eraseToAnyPublisher(),
-            settings.$backgroundOpacity.map { _ in () }.eraseToAnyPublisher()
+            settings.$backgroundOpacity.map { _ in () }.eraseToAnyPublisher(),
+            settings.$hiddenOnCurrentScreen.map { _ in () }.eraseToAnyPublisher()
         )
-        .dropFirst(8)  // 購読時に各設定が 1 回ずつ発火するぶんを読み飛ばす
+        .dropFirst(9)  // 購読時に各設定が 1 回ずつ発火するぶんを読み飛ばす
         .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
         .sink { [weak self] in self?.rememberProfile() }
         .store(in: &cancellables)
@@ -179,6 +186,11 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         // 必ずフレームを移した後に行う（先に変えると、記憶が移動前の画面に上書きされる）
         if let profile = storedProfile(for: target) {
             applyProfile(profile)
+        } else if settings.hiddenOnCurrentScreen {
+            // 記憶のない画面は「表示する」が既定
+            isApplyingProfile = true
+            settings.hiddenOnCurrentScreen = false
+            isApplyingProfile = false
         }
     }
 
@@ -229,7 +241,16 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             "keyColorHex": settings.keyColorHex,
             "backgroundEnabled": settings.backgroundEnabled,
             "backgroundOpacity": settings.backgroundOpacity,
+            "hidden": settings.hiddenOnCurrentScreen,
         ]
+    }
+
+    /// 起動時に、いまキー表示がある画面の「この画面では表示しない」状態を復元する
+    private func restoreHiddenFlagForCurrentScreen() {
+        let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+        guard let screen = panel.screen ?? screenContaining(center),
+              let profile = storedProfile(for: screen) else { return }
+        settings.hiddenOnCurrentScreen = (profile["hidden"] as? Bool) ?? false
     }
 
     /// いまキー表示がある画面の表示設定一式として記憶する
@@ -277,6 +298,10 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         if let v = profile["backgroundOpacity"] as? Double, abs(v - settings.backgroundOpacity) > 0.001 {
             settings.backgroundOpacity = v
         }
+        let hidden = (profile["hidden"] as? Bool) ?? false
+        if hidden != settings.hiddenOnCurrentScreen {
+            settings.hiddenOnCurrentScreen = hidden
+        }
     }
 
     /// ディスプレイ固有の識別子。プロジェクタを抜き差ししても記憶が残るよう UUID を使う
@@ -289,7 +314,10 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     /// 表示すべき内容があるときだけウィンドウを画面に載せる。
     /// 編集モード中はサンプル行を見せるため、空でも必ず載せる
     private func refreshVisibility() {
-        let shouldShow = settings.editMode || (wantsVisible && !model.entries.isEmpty)
+        // 編集モード中は「この画面では表示しない」でも必ず見せる
+        // （見えないまま設定を触ることになり、解除もできなくなるため）
+        let shouldShow = settings.editMode
+            || (wantsVisible && !model.entries.isEmpty && !settings.hiddenOnCurrentScreen)
         if shouldShow {
             if !panel.isVisible { panel.orderFrontRegardless() }
         } else {

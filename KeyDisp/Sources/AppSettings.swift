@@ -190,6 +190,9 @@ final class AppSettings: ObservableObject {
     var overlayContentWidth: Double = 0
     /// メニューバーホットエッジによる一時非表示中（キー入力の処理も停止する）
     @Published var hotCornerSuppressed: Bool = false
+    /// いまキー表示がある画面が「この画面では表示しない」に設定されているか。
+    /// 実体は画面ごとのプロファイル（OverlayWindowController が管理）で、これはその写し
+    @Published var hiddenOnCurrentScreen: Bool = false
 
     private init() {
         overlayVisible = d.object(forKey: "overlayVisible") as? Bool ?? true

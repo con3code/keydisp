@@ -88,6 +88,17 @@ struct EditHUDView: View {
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            Toggle(L("この画面ではキー表示を出さない", "Don't show on this screen"),
+                   isOn: $settings.hiddenOnCurrentScreen)
+                .font(.system(size: 12))
+            if settings.hiddenOnCurrentScreen {
+                Text(L("編集中はサンプルが見えたままです。完了すると、この画面ではキー表示が出なくなります。",
+                       "Samples stay visible while editing. Once you finish, nothing will be shown on this screen."))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             Picker("", selection: $settings.style) {
                 ForEach(KeyStyle.allCases) { s in
                     Text(s.label).tag(s)

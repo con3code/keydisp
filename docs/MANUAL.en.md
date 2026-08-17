@@ -154,6 +154,9 @@ there first — so you always edit the screen you are looking at.
 - **HUD panel** — a floating "Edit Display Mode" panel (top-right of the screen)
   lets you change style, size, rows, stack direction, colors, and background
   in real time
+- **Don't show on this screen** — the switch at the top of the HUD. Saved per screen,
+  so you can show the display on the audience screen but keep your own screen clean
+  (samples stay visible while editing; the setting takes effect once you finish)
 
 Sample rows (combinations, typing, ×n counts, clicks) are shown while editing
 so you can see exactly how everything will look.
