@@ -10,6 +10,8 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     private static let frameKey = "OverlayWindowFrame"
     /// カーソル追従用: 画面（ディスプレイ UUID）ごとの定位置
     private static let framesByScreenKey = "OverlayFrameByScreen"
+    /// カーソル追従用: 画面ごとの表示倍率（キーの大きさ）
+    private static let scalesByScreenKey = "OverlayScaleByScreen"
     static let defaultSize = NSSize(width: 620, height: 440)
 
     let panel: NSPanel
@@ -86,6 +88,15 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
             .sink { [weak self] _ in self?.refreshVisibility() }
             .store(in: &cancellables)
 
+        // 表示倍率（サイズ）の変更を、いまいる画面の値として記憶する
+        // （カーソル追従で、会場は大きく・手元は小さく、のような使い分けができるように）
+        settings.$displayScale
+            .removeDuplicates()
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] scale in self?.rememberScale(scale) }
+            .store(in: &cancellables)
+
         // 「ドラッグで移動」オプションに応じてマウスの受付を切り替える
         settings.$dragToMove
             .removeDuplicates()
@@ -147,6 +158,11 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
         panel.setFrame(clamp(frame, to: target), display: true)
         publishContentWidth()
         saveFrame()
+        // その画面で記憶している表示倍率があれば切り替える。
+        // 必ずフレームを移した後に行う（先に変えると、倍率の記憶が移動前の画面に上書きされる）
+        if let scale = storedScale(for: target), abs(scale - settings.displayScale) > 0.001 {
+            settings.displayScale = scale
+        }
     }
 
     /// その画面で記憶している定位置（画面内に収まっているもののみ）
@@ -183,6 +199,22 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
 
     private func screenContaining(_ point: CGPoint) -> NSScreen? {
         NSScreen.screens.first { $0.frame.contains(point) }
+    }
+
+    /// いまキー表示がある画面の表示倍率として記憶する
+    private func rememberScale(_ scale: Double) {
+        let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+        guard let screen = panel.screen ?? screenContaining(center),
+              let key = Self.screenKey(screen) else { return }
+        var dict = UserDefaults.standard.dictionary(forKey: Self.scalesByScreenKey) as? [String: Double] ?? [:]
+        dict[key] = scale
+        UserDefaults.standard.set(dict, forKey: Self.scalesByScreenKey)
+    }
+
+    private func storedScale(for screen: NSScreen) -> Double? {
+        guard let key = Self.screenKey(screen),
+              let dict = UserDefaults.standard.dictionary(forKey: Self.scalesByScreenKey) as? [String: Double] else { return nil }
+        return dict[key]
     }
 
     /// ディスプレイ固有の識別子。プロジェクタを抜き差ししても記憶が残るよう UUID を使う
@@ -267,8 +299,9 @@ final class OverlayWindowController: NSObject, NSWindowDelegate {
     /// 位置とサイズをメインスクリーン左下のデフォルト状態へ戻す。
     /// サイズは現在の表示倍率を考慮して決める（大きな倍率でも表示が収まるように）。
     func resetPosition() {
-        // 画面ごとの定位置の記憶もすべてクリアして、まっさらな既定状態へ戻す
+        // 画面ごとの定位置・表示倍率の記憶もすべてクリアして、まっさらな既定状態へ戻す
         UserDefaults.standard.removeObject(forKey: Self.framesByScreenKey)
+        UserDefaults.standard.removeObject(forKey: Self.scalesByScreenKey)
         guard let screen = NSScreen.main else { return }
         let v = screen.visibleFrame
         let scale = max(1, settings.displayScale)

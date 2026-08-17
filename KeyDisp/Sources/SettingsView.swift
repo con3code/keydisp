@@ -174,8 +174,8 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
                 Toggle(L("カーソルのある画面に表示する", "Show on the screen with the cursor"),
                        isOn: $settings.followCursorScreen)
-                Text(L("マルチディスプレイで、キー表示がカーソルのある画面へ付いてきます。位置とサイズは画面ごとに記憶され、表示編集モードで動かした場所がその画面の定位置になります。画面の切り替わりは、新しいキー入力が表示される瞬間に行われます。",
-                       "On multi-display setups the key display follows the cursor's screen. Position and size are remembered per screen — wherever you place it in Edit Display Mode becomes that screen's home. Switching happens the moment a new key appears."))
+                Text(L("マルチディスプレイで、キー表示がカーソルのある画面へ付いてきます。位置・表示領域・サイズ（表示倍率）は画面ごとに記憶され、その画面で調整した状態がそのまま定位置になります。画面の切り替わりは、新しいキー入力が表示される瞬間に行われます。",
+                       "On multi-display setups the key display follows the cursor's screen. Position, display area and Size (scale) are remembered per screen — however you arrange it on a screen becomes that screen's home. Switching happens the moment a new key appears."))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

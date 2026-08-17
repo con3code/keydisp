@@ -183,7 +183,7 @@ Open **Settings…** from the menu bar. Settings are organized into a sidebar on
 | Drag the key display to move it | When on, grab the keys on screen to move the display area. The fade-out pauses while dragging. Clicks directly on the keys no longer reach the app beneath (empty areas click through) |
 | Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
 | Hide key display while the cursor is at the bottom edge | Hot-edge feature: while the cursor stays within 10 px of the bottom edge of any screen, the display is hidden and input during that time is not shown |
-| Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position and size are remembered per screen; "Reset Position & Size" clears the memory for all screens |
+| Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position, display area and Size (scale) are remembered per screen; "Reset Position & Size" clears the memory for all screens |
 
 ### Key Labels
 
