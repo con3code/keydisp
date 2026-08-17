@@ -182,6 +182,9 @@ Open **Settings…** from the menu bar. Settings are organized into a sidebar on
 | Show Background | Toggles the background |
 | Background Opacity | 0–100% |
 | Custom Background Image | Image used behind rows when the Custom Image style is selected. Ready-made samples live in [Samples/Backgrounds](../Samples/Backgrounds) |
+| Display Rows | Maximum simultaneous rows (1–8) |
+| Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
+| Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
 
 The background is stretched as a **nine-slice**: the image is cut into thirds on both
 axes, the corners keep their proportions, the top and bottom edges stretch only
@@ -221,9 +224,6 @@ together, the duplicate Ctrl is shown only once.)
 | Hold Duration | How long a row remains after release (0–5 s) |
 | Fade-out Duration | How long the fade takes (0.1–4 s) |
 | Animate typing growth | Smoothly animates rows growing as you type (default on). Turn off if the custom-image backdrop appears to lag behind the text |
-| Display Rows | Maximum simultaneous rows (1–8) |
-| Show newest at the top (hang-down style) | On: rows hang from the top edge (newest at top). Off: rows stack from the bottom edge (newest at bottom) |
-| Row Alignment | Which way rows grow (left / center / right). Choose Right when the overlay sits on the right side of the screen |
 | Drag the key display to move it | When on, grab the keys on screen to move the display area. The fade-out pauses while dragging. Clicks directly on the keys no longer reach the app beneath (empty areas click through) |
 | Show on the screen with the cursor | On multi-display setups the key display follows the cursor's screen. Position, display area and the Edit Display Mode appearance settings (style, size, rows, colors, background) are remembered per screen; "Reset Position & Size" clears the memory for all screens |
 | Keep history while the cursor is at the top edge | Park the cursor at the top edge to pause the fade-out; move away and rows resume fading |
